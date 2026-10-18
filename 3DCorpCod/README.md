@@ -1,66 +1,62 @@
 # 3DCorpCod
 
-Браузерный редактор 3D-моделей. Текущий этап — архитектурный каркас и первый прототип рабочей области.
+Браузерный 3D-редактор с поддержкой миллиметров, локального сохранения проекта и экспорта STL. Проект продолжает развиваться; это ещё не полноценная CAD-система.
 
 ## Требования
 
 - Node.js 20.19+ или 22.12+
 - npm
 
-## Запуск
+## Запуск и проверка
 
 ```bash
 npm install
 npm run dev
 ```
 
-Для проверки production-сборки:
+Production-сборка:
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Текущая основа
+## Реализовано в текущем прототипе
 
-- React + TypeScript + Vite
-- Three.js + React Three Fiber + Drei
+- React + TypeScript + Vite, Three.js / React Three Fiber
 - Zustand для состояния редактора
-- IndexedDB для локального сохранения проекта
-- Отдельный модуль экспорта STL
-- Светлая и тёмная темы
-- Примитивы, базовые трансформации и панель свойств
+- локальное сохранение проекта через IndexedDB
+- светлая и тёмная темы
+- добавление, выбор, дублирование и удаление объектов
+- редактирование положения, размеров и поворота в миллиметрах/градусах
+- примитивы: куб, сфера, цилиндр, конус, тор, капсула, пирамида и треугольная призма
+- для куба: отсутствие обработки, скругление рёбер и фаска; настраиваемый размер, число сегментов скругления
+- сохранение и открытие проекта в формате `.3dcc`
+- экспорт видимых объектов сцены в бинарный STL; обработка рёбер использует ту же геометрию, что и окно просмотра
 
-## Архитектурные границы
+## Структура
 
-- `src/app` — композиция приложения.
-- `src/editor` — модель данных и состояние редактора.
-- `src/geometry` — геометрические операции и проверки.
-- `src/storage` — локальное хранилище проектов.
-- `src/export` — экспортные форматы.
-- `src/components` — интерфейсные компоненты.
-- `src/styles` — темы и оформление.
+- `src/app` — композиция приложения и действия интерфейса
+- `src/editor` — модель данных, значения по умолчанию и Zustand store
+- `src/geometry` — создание геометрии и будущие геометрические операции
+- `src/storage` — локальное хранилище
+- `src/export` — экспортные форматы
+- `src/components` — интерфейсные компоненты
+- `src/styles` — оформление
 
-## Важное ограничение прототипа
+## Ограничения
 
-Это начальный каркас, а не законченный CAD-редактор. Булевы операции, полноценный объёмный текст, расширенная валидация сеток, экспорт выбранных объектов и интеграционные тесты будут добавляться отдельными этапами. Перед физической печатью экспортированные STL нужно проверять в слайсере.
+- Фаска и скругление доступны сейчас для куба; полноценная обработка рёбер произвольных сеток ещё не реализована.
+- Булевы операции объединения/вычитания/пересечения, 3D-текст, проверка замкнутости и самопересечений сетки, экспорт только выбранного объекта и полноценные тесты геометрии требуют следующих этапов.
+- STL не содержит единиц измерения. 3DCorpCod строит модели в миллиметрах, но перед печатью обязательно проверь размер и целостность сетки в слайсере.
 
-## Windows portable application
+## Windows portable EXE
 
-The project is configured to package the desktop app as a Windows x64 portable executable (no installer):
+Сборка Windows x64 без установщика:
 
 ```bash
 npm install
 npm run dist:win
 ```
 
-The output is placed in `release/` as `3DCorpCod-Portable-0.1.0.exe`. On launch, Electron opens the bundled editor in its own window; no browser needs to be opened manually. The first build requires internet access to download npm packages and the Electron runtime. The executable itself is intended to run without a separate installation.
-
-For local development after building the web interface:
-
-```bash
-npm run build
-npm run desktop
-```
-
-Note: this packaging setup is a foundation, not a claim that all planned modeling features are implemented. Boolean operations, 3D text, connected STL export, and comprehensive mesh validation remain future implementation stages.
+Результат появляется в `release/`. В GitHub Actions EXE загружается как артефакт сборки. Упаковка приложения не означает, что все запланированные CAD-функции уже реализованы.
