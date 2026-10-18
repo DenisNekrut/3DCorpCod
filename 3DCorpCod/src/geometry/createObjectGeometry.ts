@@ -102,7 +102,7 @@ export function createObjectGeometry(object: ModelObject): BufferGeometry {
     }
     case 'prism': {
       const geometry = new CylinderGeometry(0.5, 0.5, 1, 3, 1);
-      geometry.scale(width * 1.15, height, depth * 1.15);
+      geometry.scale(width * (4 / 3), height, depth * (2 / Math.sqrt(3)));
       return geometry;
     }
     default: {
