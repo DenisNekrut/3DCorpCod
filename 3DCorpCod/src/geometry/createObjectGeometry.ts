@@ -89,10 +89,9 @@ export function createObjectGeometry(object: ModelObject): BufferGeometry {
     }
     case 'capsule': {
       const diameter = Math.min(width, depth);
-      const radius = 0.5;
       const straightLength = Math.max(0.01, height / diameter - 1);
-      const geometry = new CapsuleGeometry(radius, straightLength, 8, 24);
-      geometry.scale(width, diameter / (straightLength + 1), depth);
+      const geometry = new CapsuleGeometry(0.5, straightLength, 8, 24);
+      geometry.scale(width, height / (straightLength + 1), depth);
       return geometry;
     }
     case 'pyramid': {
