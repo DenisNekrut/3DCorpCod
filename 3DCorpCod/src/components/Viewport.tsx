@@ -1,37 +1,34 @@
-import { useRef } from 'react';
+import { useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, OrbitControls } from '@react-three/drei';
-import type { Mesh } from 'three';
 import { useEditorStore } from '../editor/store';
 import type { ModelObject } from '../editor/types';
+import { createObjectGeometry } from '../geometry/createObjectGeometry';
 
 function ModelMesh({ object }: { object: ModelObject }) {
-  const meshRef = useRef<Mesh>(null);
   const selected = useEditorStore((state) => state.selectedId === object.id);
   const selectObject = useEditorStore((state) => state.selectObject);
-
-  const geometry = (() => {
-    switch (object.type) {
-      case 'sphere': return <sphereGeometry args={[0.5, 32, 24]} />;
-      case 'cylinder': return <cylinderGeometry args={[0.5, 0.5, 1, 32]} />;
-      case 'cone': return <coneGeometry args={[0.5, 1, 32]} />;
-      default: return <boxGeometry args={[1, 1, 1]} />;
-    }
-  })();
+  const geometry = useMemo(() => createObjectGeometry(object), [
+    object.type,
+    object.dimensions[0],
+    object.dimensions[1],
+    object.dimensions[2],
+    object.edgeTreatment,
+    object.edgeSize,
+    object.edgeSegments,
+  ]);
 
   return (
     <mesh
-      ref={meshRef}
+      geometry={geometry}
       position={object.position}
       rotation={object.rotation.map((angle) => angle * Math.PI / 180) as [number, number, number]}
-      scale={object.dimensions}
       visible={object.visible}
       onClick={(event) => {
         event.stopPropagation();
         selectObject(object.id);
       }}
     >
-      {geometry}
       <meshStandardMaterial
         color={selected ? '#62a8ff' : '#8295b2'}
         roughness={0.55}
