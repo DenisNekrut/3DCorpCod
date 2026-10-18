@@ -4,18 +4,18 @@ import {
   CylinderGeometry,
   SphereGeometry,
   TorusGeometry,
+  Vector3,
   type BufferGeometry,
-  Shape,
-  ExtrudeGeometry,
 } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import type { ModelObject } from '../editor/types';
 
 const positive = (value: number) => Math.max(0.1, Number.isFinite(value) ? value : 0.1);
 
 /**
- * Creates the same millimetre-sized geometry for both the viewport and STL export.
- * Rounded/chamfered edges are supported on boxes; other primitives keep their native edges.
+ * Shared geometry for the viewport and STL export.
+ * Chamfer and round treatments are supported on boxes; other primitives keep native edges.
  */
 export function createObjectGeometry(object: ModelObject): BufferGeometry {
   const [rawWidth, rawHeight, rawDepth] = object.dimensions;
@@ -39,24 +39,24 @@ export function createObjectGeometry(object: ModelObject): BufferGeometry {
     }
 
     if (treatment === 'chamfer' && edgeSize > 0) {
-      const insetX = Math.max(0.05, width / 2 - edgeSize);
-      const insetY = Math.max(0.05, height / 2 - edgeSize);
-      const innerDepth = Math.max(0.1, depth - edgeSize * 2);
-      const shape = new Shape();
-      shape.moveTo(-insetX, -insetY);
-      shape.lineTo(insetX, -insetY);
-      shape.lineTo(insetX, insetY);
-      shape.lineTo(-insetX, insetY);
-      shape.closePath();
-      const geometry = new ExtrudeGeometry(shape, {
-        depth: innerDepth,
-        bevelEnabled: true,
-        bevelSegments: 1,
-        bevelSize: edgeSize,
-        bevelThickness: edgeSize,
-        curveSegments: 1,
-      });
-      geometry.translate(0, 0, -innerDepth / 2);
+      // Three points are created near each original corner. Their convex hull
+      // produces planar chamfers along all 12 edges and clips the 8 corners.
+      const hx = width / 2;
+      const hy = height / 2;
+      const hz = depth / 2;
+      const points: Vector3[] = [];
+      for (const sx of [-1, 1]) {
+        for (const sy of [-1, 1]) {
+          for (const sz of [-1, 1]) {
+            points.push(
+              new Vector3(sx * (hx - edgeSize), sy * hy, sz * hz),
+              new Vector3(sx * hx, sy * (hy - edgeSize), sz * hz),
+              new Vector3(sx * hx, sy * hy, sz * (hz - edgeSize)),
+            );
+          }
+        }
+      }
+      const geometry = new ConvexGeometry(points);
       geometry.computeVertexNormals();
       return geometry;
     }
