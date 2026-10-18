@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, OrbitControls } from '@react-three/drei';
 import { useEditorStore } from '../editor/store';
@@ -17,6 +17,8 @@ function ModelMesh({ object }: { object: ModelObject }) {
     object.edgeSize,
     object.edgeSegments,
   ]);
+
+  useEffect(() => () => geometry.dispose(), [geometry]);
 
   return (
     <mesh
