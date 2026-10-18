@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Circle, Cylinder, Cone, Copy, Download, FilePlus2, FolderOpen, Moon, Save, Sun, Trash2 } from 'lucide-react';
+import { Box, Circle, Cylinder, Cone, Donut, Pill, Triangle, Hexagon, Copy, Download, FilePlus2, FolderOpen, Moon, Save, Sun, Trash2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useEditorStore } from '../editor/store';
 import type { PrimitiveType, ProjectDocument } from '../editor/types';
 import { loadProject, saveProject } from '../storage/projectStorage';
+import { exportObjectsAsStl } from '../export/stlExport';
 import Viewport from '../components/Viewport';
 import PropertiesPanel from '../components/PropertiesPanel';
 import '../styles/app.css';
 
-const primitiveButtons: { type: PrimitiveType; label: string; Icon: typeof Box }[] = [
+const primitiveButtons: { type: PrimitiveType; label: string; Icon: LucideIcon }[] = [
   { type: 'box', label: 'Куб', Icon: Box },
   { type: 'sphere', label: 'Сфера', Icon: Circle },
   { type: 'cylinder', label: 'Цилиндр', Icon: Cylinder },
   { type: 'cone', label: 'Конус', Icon: Cone },
+  { type: 'torus', label: 'Тор', Icon: Donut },
+  { type: 'capsule', label: 'Капсула', Icon: Pill },
+  { type: 'pyramid', label: 'Пирамида', Icon: Triangle },
+  { type: 'prism', label: 'Призма', Icon: Hexagon },
 ];
 
 export default function App() {
@@ -75,8 +81,19 @@ export default function App() {
     }
   };
 
-  const exportScene = () => {
-    setSaveStatus('Экспорт STL подключается на следующем этапе');
+  const handleExportScene = () => {
+    if (!objects.some((object) => object.visible)) {
+      setSaveStatus('Нет видимых объектов для экспорта');
+      return;
+    }
+    try {
+      const safeName = projectName.trim().replace(/[^a-z0-9а-яё_-]+/gi, '-').replace(/^-+|-+$/g, '') || '3dcorpcod-model';
+      exportObjectsAsStl(objects, `${safeName}.stl`);
+      setSaveStatus('STL экспортирован');
+    } catch (error) {
+      console.error('STL export failed', error);
+      setSaveStatus('Ошибка экспорта STL');
+    }
   };
 
   return (
@@ -89,7 +106,7 @@ export default function App() {
         <div className="top-actions">
           <button className="icon-button" title="Открыть проект" onClick={() => importRef.current?.click()}><FolderOpen size={17} /><span>Открыть</span></button>
           <button className="icon-button" title="Сохранить проект" onClick={downloadProject}><Save size={17} /><span>Сохранить</span></button>
-          <button className="icon-button" title="Экспорт STL" onClick={exportScene}><Download size={17} /><span>Экспорт STL</span></button>
+          <button className="icon-button" title="Экспорт STL" onClick={handleExportScene}><Download size={17} /><span>Экспорт STL</span></button>
           <button className="icon-button theme-button" title="Переключить тему" onClick={toggleTheme}>{theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}</button>
           <input ref={importRef} className="hidden-input" type="file" accept=".3dcc,.json,application/json" onChange={(event) => { void openProject(event.target.files?.[0]); event.target.value = ''; }} />
         </div>
