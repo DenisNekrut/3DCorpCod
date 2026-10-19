@@ -7,10 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "vitest run",
-    "desktop": "electron .",
-    "dist:win": "npm run build && electron-builder --win portable",
-    "dist:win:dir": "npm run build && electron-builder --win dir"
+    "test": "vitest run"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.6",
@@ -30,21 +27,6 @@
     "@vitejs/plugin-react": "^4.7.0",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
-    "vitest": "^3.2.4",
-    "electron": "^35.2.1",
-    "electron-builder": "^26.0.12"
-  },
-  "main": "electron/main.cjs",
-  "build": {
-    "appId": "com.3dcorpcod.studio",
-    "productName": "3DCorpCod",
-    "directories": { "output": "release" },
-    "files": ["dist/**/*", "electron/**/*", "package.json"],
-    "asar": true,
-    "win": {
-      "target": [{ "target": "portable", "arch": ["x64"] }],
-      "artifactName": "3DCorpCod-Portable-${version}.${ext}"
-    },
-    "portable": { "artifactName": "3DCorpCod-Portable-${version}.${ext}" }
+    "vitest": "^3.2.4"
   }
 }
