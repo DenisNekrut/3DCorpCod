@@ -183,18 +183,6 @@ function ModelMesh({
 
   commitTransformRef.current = commitTransform;
 
-  useEffect(() => {
-    const controls = controlsRef.current;
-    if (!controls) return;
-    const eventTarget = controls as unknown as {
-      addEventListener: (type: string, listener: () => void) => void;
-      removeEventListener: (type: string, listener: () => void) => void;
-    };
-    const handleMouseUp = () => commitTransformRef.current();
-    eventTarget.addEventListener('mouseUp', handleMouseUp);
-    return () => eventTarget.removeEventListener('mouseUp', handleMouseUp);
-  }, [selected]);
-
   const mesh = (
     <mesh
       ref={meshRef}
