@@ -9,6 +9,7 @@ const dimensionsByType: Record<PrimitiveType, [number, number, number]> = {
   capsule: [16, 30, 16],
   pyramid: [20, 20, 20],
   prism: [20, 20, 20],
+  text: [30, 10, 2],
 };
 
 const names: Record<PrimitiveType, string> = {
@@ -20,6 +21,7 @@ const names: Record<PrimitiveType, string> = {
   capsule: 'Капсула',
   pyramid: 'Пирамида',
   prism: 'Треугольная призма',
+  text: 'Текст',
 };
 
 export function createPrimitive(type: PrimitiveType, index: number): ModelObject {
@@ -32,6 +34,8 @@ export function createPrimitive(type: PrimitiveType, index: number): ModelObject
     rotation: [0, 0, 0],
     dimensions: [...dimensions],
     visible: true,
+    color: '#8295b2',
+    ...(type === 'text' ? { textContent: 'Текст', fontSize: 10, textDepth: 2, textBevel: false, textBevelSize: 0.3 } : {}),
     edgeTreatment: 'none',
     edgeSize: 1,
     edgeSegments: 4,
