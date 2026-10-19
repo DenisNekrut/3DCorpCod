@@ -9,19 +9,56 @@ import {
 } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+import droidSansFont from 'three/examples/fonts/droid/droid_sans_regular.typeface.json';
 import type { ModelObject } from '../editor/types';
 
 const positive = (value: number) => Math.max(0.1, Number.isFinite(value) ? value : 0.1);
+const textFont = new FontLoader().parse(droidSansFont);
+
+function createExtrudedText(object: ModelObject, width: number, height: number, depth: number): BufferGeometry {
+  const size = positive(object.fontSize ?? height);
+  const textDepth = positive(object.textDepth ?? depth);
+  const bevelSize = Math.max(0, Math.min(object.textBevelSize ?? 0.3, textDepth * 0.4, size * 0.1));
+  const geometry = new TextGeometry((object.textContent ?? 'Текст').slice(0, 120), {
+    font: textFont,
+    size,
+    depth: textDepth,
+    curveSegments: 8,
+    bevelEnabled: Boolean(object.textBevel),
+    bevelThickness: object.textBevel ? Math.min(bevelSize, textDepth * 0.35) : 0,
+    bevelSize: object.textBevel ? bevelSize : 0,
+    bevelSegments: 2,
+  });
+  geometry.computeBoundingBox();
+  const bounds = geometry.boundingBox;
+  if (!bounds) return geometry;
+  const rawWidth = Math.max(0.001, bounds.max.x - bounds.min.x);
+  const rawHeight = Math.max(0.001, bounds.max.y - bounds.min.y);
+  const rawDepth = Math.max(0.001, bounds.max.z - bounds.min.z);
+  geometry.scale(width / rawWidth, height / rawHeight, depth / rawDepth);
+  geometry.computeBoundingBox();
+  geometry.translate(
+    -(geometry.boundingBox!.min.x + geometry.boundingBox!.max.x) / 2,
+    -(geometry.boundingBox!.min.y + geometry.boundingBox!.max.y) / 2,
+    -(geometry.boundingBox!.min.z + geometry.boundingBox!.max.z) / 2,
+  );
+  geometry.computeVertexNormals();
+  return geometry;
+}
 
 /**
  * Shared geometry for the viewport and STL export.
- * Chamfer and round treatments are supported on boxes; other primitives keep native edges.
+ * Chamfer and round treatments are supported on boxes; text is real extruded geometry.
  */
 export function createObjectGeometry(object: ModelObject): BufferGeometry {
   const [rawWidth, rawHeight, rawDepth] = object.dimensions;
   const width = positive(rawWidth);
   const height = positive(rawHeight);
   const depth = positive(rawDepth);
+
+  if (object.type === 'text') return createExtrudedText(object, width, height, depth);
 
   if (object.type === 'box') {
     const treatment = object.edgeTreatment ?? 'none';
@@ -39,8 +76,6 @@ export function createObjectGeometry(object: ModelObject): BufferGeometry {
     }
 
     if (treatment === 'chamfer' && edgeSize > 0) {
-      // Three points are created near each original corner. Their convex hull
-      // produces planar chamfers along all 12 edges and clips the 8 corners.
       const hx = width / 2;
       const hy = height / 2;
       const hz = depth / 2;
@@ -60,7 +95,6 @@ export function createObjectGeometry(object: ModelObject): BufferGeometry {
       geometry.computeVertexNormals();
       return geometry;
     }
-
     return new BoxGeometry(width, height, depth);
   }
 
