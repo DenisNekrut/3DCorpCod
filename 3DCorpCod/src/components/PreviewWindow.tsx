@@ -15,7 +15,7 @@ function PreviewMesh({ object, geometry }: { object: ModelObject; geometry?: Buf
       position={object.position}
       rotation={object.rotation.map((angle) => angle * Math.PI / 180) as [number, number, number]}
     >
-      <meshStandardMaterial color="#8caed8" roughness={0.48} metalness={0.12} />
+      <meshStandardMaterial color={object.hole ? "#f59e55" : object.color ?? "#8295b2"} roughness={0.48} metalness={0.12} />
     </mesh>
   );
 }
