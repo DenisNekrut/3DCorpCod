@@ -327,3 +327,17 @@ textarea:disabled { opacity: .5; cursor: not-allowed; }
 .home-project-open > svg { margin: 0 14px 13px 0; color: #88baff; }
 .home-project-delete { display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 8px 12px; border: 0; border-top: 1px solid #ffffff12; border-radius: 0 0 10px 10px; background: #171f2b; color: #c78e8e; font-size: 11px; cursor: pointer; }
 .home-project-delete:hover { background: #49282b; color: #ffd6d6; }
+
+
+.ruler-origin-label {
+  display: inline-block;
+  padding: 2px 4px;
+  border: 1px solid #8b7540;
+  border-radius: 3px;
+  background: #e1c477;
+  color: #2b2517;
+  font: 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px #0006;
+}
+.virtual-ruler-readout { flex-direction: column; align-items: flex-start; gap: 3px; }
