@@ -1,5 +1,5 @@
 import { MeshStandardMaterial, type BufferGeometry } from 'three';
-import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg';
+import { Brush, Evaluator, ADDITION, INTERSECTION, SUBTRACTION } from 'three-bvh-csg';
 import type { ModelObject } from '../../editor/types';
 import { createObjectGeometry } from '../createObjectGeometry';
 
@@ -22,12 +22,30 @@ const makeBrush = (object: ModelObject) => {
  */
 export function createBooleanGeometry(target: ModelObject, objects: ModelObject[]): BufferGeometry {
   const cutters = objects.filter((object) => object.visible && object.hole && object.id !== target.id);
-  if (!cutters.length) return createObjectGeometry(target);
+  const operands = target.booleanOperation && target.groupId
+    ? objects.filter((object) => object.visible && object.booleanSource && object.groupId === target.groupId && object.id !== target.id)
+    : [];
+  if (!cutters.length && !operands.length) return createObjectGeometry(target);
 
   let result = makeBrush(target);
   const ownedBrushes: Brush[] = [result];
 
   try {
+    for (const operandObject of operands) {
+      const operand = makeBrush(operandObject);
+      ownedBrushes.push(operand);
+      const operation = target.booleanOperation === 'union' ? ADDITION : target.booleanOperation === 'intersect' ? INTERSECTION : SUBTRACTION;
+      const next = evaluator.evaluate(result, operand, operation);
+      next.position.set(...target.position);
+      next.rotation.set(
+        target.rotation[0] * Math.PI / 180,
+        target.rotation[1] * Math.PI / 180,
+        target.rotation[2] * Math.PI / 180,
+      );
+      next.updateMatrixWorld(true);
+      ownedBrushes.push(next);
+      result = next;
+    }
     for (const cutterObject of cutters) {
       const cutter = makeBrush(cutterObject);
       ownedBrushes.push(cutter);
