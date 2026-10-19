@@ -196,7 +196,7 @@ function SceneContents() {
       <gridHelper args={[200, 40, '#66758c', '#303949']} position={[0, 0, 0]} />
       <WorkspaceRulers />
       <axesHelper args={[30]} />
-      {objects.map((object) => (
+      {objects.filter((object) => !object.booleanSource).map((object) => (
         <ModelMesh
           key={object.id}
           object={object}
