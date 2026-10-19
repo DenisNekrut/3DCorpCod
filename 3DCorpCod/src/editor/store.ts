@@ -32,6 +32,7 @@ interface EditorState {
   redoStack: Snapshot[];
   lastHistoryAt?: number;
   addPrimitive: (type: PrimitiveType) => void;
+  addObjectFromPreset: (preset: ModelObject) => void;
   selectObject: (id: string | null) => void;
   toggleSelectObject: (id: string) => void;
   updateObject: (id: string, patch: Partial<ModelObject>) => void;
@@ -63,6 +64,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   redoStack: [],
   addPrimitive: (type) => set((state) => {
     const object = createPrimitive(type, state.objects.length);
+    return { ...record(state), objects: [...state.objects, object], selectedId: object.id, selectedIds: [object.id] };
+  }),
+  addObjectFromPreset: (preset) => set((state) => {
+    const object: ModelObject = {
+      ...preset, id: crypto.randomUUID(), name: preset.name || 'Пользовательская фигура',
+      position: [preset.position[0], Math.max(preset.dimensions[1] / 2, 0), preset.position[2]],
+      rotation: [...preset.rotation], dimensions: [...preset.dimensions],
+      mirror: preset.mirror ? [...preset.mirror] as [boolean, boolean, boolean] : [false, false, false],
+      locked: false, booleanSource: false, groupId: undefined,
+    };
     return { ...record(state), objects: [...state.objects, object], selectedId: object.id, selectedIds: [object.id] };
   }),
   selectObject: (id) => set({ selectedId: id, selectedIds: id ? [id] : [] }),
@@ -200,6 +211,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       locked: object.locked ?? false,
       hole: object.hole ?? false,
       color: object.color ?? '#8295b2',
+      layer: object.layer ?? 'Основной',
       mirror: object.mirror ?? [false, false, false],
       ...(object.type === 'text' ? { textContent: object.textContent ?? 'Текст', fontSize: object.fontSize ?? 10, textDepth: object.textDepth ?? object.dimensions[2], textBevel: object.textBevel ?? false, textBevelSize: object.textBevelSize ?? 0.3 } : {}),
     }))),
