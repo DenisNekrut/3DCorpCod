@@ -15,6 +15,8 @@ interface EditorState {
   setTransformMode: (mode: TransformMode) => void;
   deleteSelected: () => void;
   duplicateSelected: () => void;
+  toggleLockSelected: () => void;
+  toggleHoleSelected: () => void;
   loadProject: (project: ProjectDocument) => void;
   getProject: () => ProjectDocument;
 }
@@ -30,23 +32,38 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   }),
   selectObject: (id) => set({ selectedId: id }),
   updateObject: (id, patch) => set((state) => ({
-    objects: state.objects.map((object) => object.id === id ? { ...object, ...patch } : object),
+    objects: state.objects.map((object) => {
+      if (object.id !== id) return object;
+      // Lock state itself may always be changed; all other changes are blocked.
+      if (object.locked && Object.keys(patch).some((key) => key !== 'locked')) return object;
+      return { ...object, ...patch };
+    }),
   })),
   setTransformMode: (mode) => set({ transformMode: mode }),
-  deleteSelected: () => set((state) => ({
-    objects: state.objects.filter((object) => object.id !== state.selectedId),
-    selectedId: null,
-  })),
+  deleteSelected: () => set((state) => {
+    const selected = state.objects.find((object) => object.id === state.selectedId);
+    if (!selected || selected.locked) return state;
+    return { objects: state.objects.filter((object) => object.id !== state.selectedId), selectedId: null };
+  }),
   duplicateSelected: () => set((state) => {
     const source = state.objects.find((object) => object.id === state.selectedId);
-    if (!source) return state;
+    if (!source || source.locked) return state;
     const copy: ModelObject = {
       ...source,
       id: crypto.randomUUID(),
       name: `${source.name} — копия`,
+      locked: false,
       position: [source.position[0] + 10, source.position[1], source.position[2] + 10],
     };
     return { objects: [...state.objects, copy], selectedId: copy.id };
+  }),
+  toggleLockSelected: () => set((state) => ({
+    objects: state.objects.map((object) => object.id === state.selectedId ? { ...object, locked: !object.locked } : object),
+  })),
+  toggleHoleSelected: () => set((state) => {
+    const selected = state.objects.find((object) => object.id === state.selectedId);
+    if (!selected || selected.locked) return state;
+    return { objects: state.objects.map((object) => object.id === selected.id ? { ...object, hole: !object.hole } : object) };
   }),
   loadProject: (project) => set({
     projectName: project.name,
@@ -55,6 +72,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       position: [...object.position] as [number, number, number],
       rotation: [...object.rotation] as [number, number, number],
       dimensions: [...object.dimensions] as [number, number, number],
+      locked: object.locked ?? false,
+      hole: object.hole ?? false,
     })),
     selectedId: project.objects[0]?.id ?? null,
     transformMode: 'translate',
