@@ -284,6 +284,8 @@ function ModelMesh({
 
 function SceneContents({ rulerEnabled, rulerAnchor, setRulerAnchor }: { rulerEnabled: boolean; rulerAnchor: [number, number, number] | null; setRulerAnchor: (point: [number, number, number]) => void }) {
   const objects = useEditorStore((state) => state.objects);
+  const selectedId = useEditorStore((state) => state.selectedId);
+  const selectedObject = objects.find((object) => object.id === selectedId);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const evaluatedGeometries = useMemo(() => {
     if (!objects.some((object) => object.visible && object.hole)) return new Map<string, BufferGeometry>();
