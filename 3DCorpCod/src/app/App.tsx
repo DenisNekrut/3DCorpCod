@@ -182,7 +182,7 @@ export default function App() {
         const dimensions: [number, number, number] = [
           Math.max(0.1, size.x), Math.max(0.1, size.y), Math.max(0.1, size.z),
         ];
-        const center = bounds.getCenter(new (await import('three')).Vector3());
+        const center = bounds.getCenter(new Vector3());
         geometry.translate(-center.x, -center.y, -center.z);
         const positions: number[] = [];
         const centered = geometry.getAttribute('position');
