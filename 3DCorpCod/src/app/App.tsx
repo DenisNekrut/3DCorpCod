@@ -395,7 +395,7 @@ export default function App() {
           <button className="icon-button" title="Скачать STL" onClick={() => handleExport('stl')}><Download size={17} /><span>STL</span></button>
           <button className="icon-button" title="Скачать 3MF" onClick={() => handleExport('3mf')}><Download size={17} /><span>3MF</span></button>
           <button className="icon-button" title="Экспортировать модель в OBJ" onClick={() => handleExport('obj')}><Download size={17} /><span>OBJ</span></button>
-          <input ref={importRef} className="hidden-input" type="file" accept=".3dcc,.json,application/json" onChange={(event) => { void openProject(event.target.files?.[0]); event.target.value = ''; }} />
+          <input ref={importRef} className="hidden-input" type="file" accept=".3dcc,.json,.stl,application/json,model/stl" onChange={(event) => { void openProject(event.target.files?.[0]); event.target.value = ''; }} />
         </div>
       </header>
 
