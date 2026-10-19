@@ -39,6 +39,9 @@ export interface ModelObject {
   edgeSegments?: number;
   /** Optional logical group; objects remain independently editable. */
   groupId?: string;
+  /** Boolean operation result; operands are retained parametrically in the same group. */
+  booleanOperation?: 'union' | 'subtract' | 'intersect';
+  booleanSource?: boolean;
   /** Axis reflection flags, applied to geometry and exports. */
   mirror?: [boolean, boolean, boolean];
 }
