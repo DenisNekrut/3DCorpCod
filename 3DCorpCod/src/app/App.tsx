@@ -50,6 +50,7 @@ export default function App() {
   const mirrorSelected = useEditorStore((state) => state.mirrorSelected);
   const groupSelected = useEditorStore((state) => state.groupSelected);
   const ungroupSelected = useEditorStore((state) => state.ungroupSelected);
+  const booleanSelected = useEditorStore((state) => state.booleanSelected);
   const toggleSelectObject = useEditorStore((state) => state.toggleSelectObject);
   const getProject = useEditorStore((state) => state.getProject);
   const loadProjectIntoStore = useEditorStore((state) => state.loadProject);
@@ -58,6 +59,13 @@ export default function App() {
   const importRef = useRef<HTMLInputElement>(null);
   const selectedObject = objects.find((object) => object.id === selectedId);
   const selectedLocked = Boolean(selectedObject?.locked);
+  const printWarnings = objects.flatMap((object) => {
+    if (!object.visible || object.hole || object.booleanSource) return [];
+    const warnings: string[] = [];
+    if (Math.min(...object.dimensions) < 0.8) warnings.push(`${object.name}: есть стенка или размер меньше 0,8 мм — проверь возможности принтера`);
+    if (object.position[1] - object.dimensions[1] / 2 < -0.05) warnings.push(`${object.name}: объект опускается ниже рабочей плоскости Y=0`);
+    return warnings;
+  });
 
   useEffect(() => {
     document.documentElement.dataset.theme = 'dark';
@@ -225,10 +233,13 @@ export default function App() {
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'center')} title="Выровнять по центру X"><AlignCenterHorizontal size={15} /> X центр</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'max')} title="Выровнять по краю X"><AlignEndHorizontal size={15} /> X max</button>
             <button className="tool-button" disabled={!selectedIds.length} onClick={() => mirrorSelected(0)} title="Отразить относительно центра выбора по X"><FlipHorizontal size={15} /> Отразить X</button>
+            <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => booleanSelected('union')} title="Объединить выбранные тела"><span aria-hidden="true">∪</span> Объединить</button>
+            <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => booleanSelected('subtract')} title="Вычесть остальные выбранные тела из активного"><span aria-hidden="true">−</span> Вычесть</button>
+            <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => booleanSelected('intersect')} title="Оставить только общую часть выбранных тел"><span aria-hidden="true">∩</span> Пересечение</button>
             <button className="tool-button" onClick={() => setPreviewOpen(true)}><Eye size={15} /> Предпросмотр</button>
           </div>
           <Viewport />
-          <footer className="statusbar"><span><i className="status-indicator" /> {saveStatus}</span><span>{objects.length} объектов</span><span>Единицы: мм</span></footer>
+          <footer className="statusbar"><span><i className="status-indicator" /> {saveStatus}</span><span>{objects.length} объектов</span><span title={printWarnings.join('\n')}>{printWarnings.length ? `⚠ Проверка печати: ${printWarnings.length}` : '✓ Геометрия: базовая проверка пройдена'}</span><span>Единицы: мм</span></footer>
         </section>
 
         <PropertiesPanel />
