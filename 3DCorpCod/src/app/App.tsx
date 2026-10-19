@@ -5,6 +5,7 @@ import {
   Unlock, CircleSlash, Eye, Lock, Type, Undo2, Redo2, Magnet, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, FlipHorizontal, Group, Ungroup, Github, Plus, ArrowRight, CloudUpload,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { Vector3 } from 'three';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { useEditorStore } from '../editor/store';
 import { inspectPrintability } from '../editor/printability';
@@ -176,7 +177,7 @@ export default function App() {
           geometry.dispose();
           throw new Error('STL does not contain valid triangles');
         }
-        const size = bounds.getSize(new (await import('three')).Vector3());
+        const size = bounds.getSize(new Vector3());
         const dimensions: [number, number, number] = [
           Math.max(0.1, size.x), Math.max(0.1, size.y), Math.max(0.1, size.z),
         ];
