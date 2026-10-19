@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useEditorStore } from '../editor/store';
 import type { EdgeTreatment } from '../editor/types';
 
@@ -6,6 +7,27 @@ const edgeLabels: Record<EdgeTreatment, string> = {
   round: 'Скругление',
   chamfer: 'Фаска',
 };
+
+function NumberField({ value, disabled, min, step, onCommit }: {
+  value: number;
+  disabled: boolean;
+  min?: number;
+  step: number;
+  onCommit: (raw: string) => void;
+}) {
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => setDraft(String(value)), [value]);
+  return <input
+    disabled={disabled}
+    type="number"
+    min={min}
+    step={step}
+    value={draft}
+    onChange={(event) => setDraft(event.target.value)}
+    onBlur={() => onCommit(draft)}
+    onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }}
+  />;
+}
 
 export default function PropertiesPanel() {
   const selected = useEditorStore((state) => state.objects.find((item) => item.id === state.selectedId));
@@ -79,19 +101,19 @@ export default function PropertiesPanel() {
       <div className="section-label">Положение (мм)</div>
       <div className="triple-fields">
         {(['X', 'Y', 'Z'] as const).map((axis, index) => <label key={axis}>{axis}
-          <input disabled={disabled} type="number" step="0.1" value={selected.position[index]} onChange={(event) => updateTuple('position', index, event.target.value)} />
+          <NumberField disabled={disabled} step={0.1} value={selected.position[index]} onCommit={(raw) => updateTuple('position', index, raw)} />
         </label>)}
       </div>
       <div className="section-label">Размеры (мм)</div>
       <div className="triple-fields">
         {(['X', 'Y', 'Z'] as const).map((axis, index) => <label key={axis}>{axis}
-          <input disabled={disabled} type="number" min="0.1" step="0.1" value={selected.dimensions[index]} onChange={(event) => updateTuple('dimensions', index, event.target.value)} />
+          <NumberField disabled={disabled} min={0.1} step={0.1} value={selected.dimensions[index]} onCommit={(raw) => updateTuple('dimensions', index, raw)} />
         </label>)}
       </div>
       <div className="section-label">Поворот (°)</div>
       <div className="triple-fields">
         {(['X', 'Y', 'Z'] as const).map((axis, index) => <label key={axis}>{axis}
-          <input disabled={disabled} type="number" step="1" value={selected.rotation[index]} onChange={(event) => updateTuple('rotation', index, event.target.value)} />
+          <NumberField disabled={disabled} step={1} value={selected.rotation[index]} onCommit={(raw) => updateTuple('rotation', index, raw)} />
         </label>)}
       </div>
 
