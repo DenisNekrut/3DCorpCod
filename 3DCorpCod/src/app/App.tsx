@@ -36,7 +36,9 @@ export default function App() {
   const addPrimitive = useEditorStore((state) => state.addPrimitive);
   const selectObject = useEditorStore((state) => state.selectObject);
   const deleteSelected = useEditorStore((state) => state.deleteSelected);
-  const duplicateSelected = useEditorStore((state) => state.duplicateSelected);\n  const copySelected = useEditorStore((state) => state.copySelected);\n  const pasteCopied = useEditorStore((state) => state.pasteCopied);
+  const duplicateSelected = useEditorStore((state) => state.duplicateSelected);
+  const copySelected = useEditorStore((state) => state.copySelected);
+  const pasteCopied = useEditorStore((state) => state.pasteCopied);
   const setTransformMode = useEditorStore((state) => state.setTransformMode);
   const toggleLockSelected = useEditorStore((state) => state.toggleLockSelected);
   const toggleHoleSelected = useEditorStore((state) => state.toggleHoleSelected);
@@ -161,7 +163,11 @@ export default function App() {
         event.preventDefault(); undo();
       } else if (command && (event.key.toLowerCase() === 'y' || (event.key.toLowerCase() === 'z' && event.shiftKey))) {
         event.preventDefault(); redo();
-      } else if (command && event.key.toLowerCase() === 'c' && selectedId) {\n        event.preventDefault(); copySelected();\n      } else if (command && event.key.toLowerCase() === 'v') {\n        event.preventDefault(); pasteCopied();\n      } else if (command && event.key.toLowerCase() === 'd' && selectedId) {
+      } else if (command && event.key.toLowerCase() === 'c' && selectedId) {
+        event.preventDefault(); copySelected();
+      } else if (command && event.key.toLowerCase() === 'v') {
+        event.preventDefault(); pasteCopied();
+      } else if (command && event.key.toLowerCase() === 'd' && selectedId) {
         event.preventDefault();
         duplicateSelected();
       } else if ((event.key === 'Delete' || event.key === 'Backspace') && selectedId) {
