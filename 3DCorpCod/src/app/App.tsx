@@ -81,7 +81,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!objects.length) return;
+    if (screen !== 'editor') return;
     const timeout = window.setTimeout(() => {
       const project = getProject();
       try {
@@ -93,7 +93,7 @@ export default function App() {
       } catch { /* recent-project list is optional */ }
     }, 500);
     return () => window.clearTimeout(timeout);
-  }, [objects, projectName, getProject]);
+  }, [objects, projectName, getProject, screen]);
   useEffect(() => {
     document.documentElement.dataset.theme = 'dark';
     try {
