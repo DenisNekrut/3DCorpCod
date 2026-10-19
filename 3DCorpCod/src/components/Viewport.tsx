@@ -8,26 +8,47 @@ import type { ModelObject } from '../editor/types';
 import { createObjectGeometry } from '../geometry/createObjectGeometry';
 import { createBooleanGeometry } from '../geometry/boolean/createBooleanGeometry';
 
-function DimensionLines({ object }: { object: ModelObject }) {
+function DimensionLines({ object, editable, onDimensionChange }: {
+  object: ModelObject;
+  editable: boolean;
+  onDimensionChange: (axis: 0 | 1 | 2, value: number) => void;
+}) {
   const [width, height, depth] = object.dimensions;
   const [x, y, z] = object.position;
   const hx = width / 2;
   const hy = height / 2;
   const hz = depth / 2;
   const offset = 3;
+  const input = (axis: 0 | 1 | 2, value: number) => (
+    <input
+      className="dimension-input"
+      aria-label={['Ширина', 'Высота', 'Глубина'][axis]}
+      type="number"
+      min="0.1"
+      step="0.1"
+      value={value.toFixed(1)}
+      readOnly={!editable}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => event.stopPropagation()}
+      onChange={(event) => {
+        const next = Number(event.target.value);
+        if (Number.isFinite(next) && next >= 0.1) onDimensionChange(axis, Math.round(next * 10) / 10);
+      }}
+    />
+  );
   return (
     <group>
       <Line points={[[x - hx, y - hy - offset, z + hz + offset], [x + hx, y - hy - offset, z + hz + offset]]} color="#72b7ff" lineWidth={1} />
       <Line points={[[x - hx, y - hy - offset, z - hz - offset], [x - hx, y - hy - offset, z + hz + offset]]} color="#72b7ff" lineWidth={1} />
       <Line points={[[x + hx + offset, y - hy, z + hz + offset], [x + hx + offset, y + hy, z + hz + offset]]} color="#72b7ff" lineWidth={1} />
-      <Html position={[x, y - hy - offset, z + hz + offset]} center distanceFactor={100} style={{ pointerEvents: 'none' }}>
-        <span className="dimension-label">{width.toFixed(1)} мм</span>
+      <Html position={[x, y - hy - offset, z + hz + offset]} center distanceFactor={100}>
+        <span className="dimension-label"><span>Ш</span>{input(0, width)}</span>
       </Html>
-      <Html position={[x - hx, y - hy - offset, z]} center distanceFactor={100} style={{ pointerEvents: 'none' }}>
-        <span className="dimension-label">{depth.toFixed(1)} мм</span>
+      <Html position={[x - hx, y - hy - offset, z]} center distanceFactor={100}>
+        <span className="dimension-label"><span>Г</span>{input(2, depth)}</span>
       </Html>
-      <Html position={[x + hx + offset, y, z + hz + offset]} center distanceFactor={100} style={{ pointerEvents: 'none' }}>
-        <span className="dimension-label">{height.toFixed(1)} мм</span>
+      <Html position={[x + hx + offset, y, z + hz + offset]} center distanceFactor={100}>
+        <span className="dimension-label"><span>В</span>{input(1, height)}</span>
       </Html>
     </group>
   );
@@ -96,6 +117,10 @@ function ModelMesh({
     }
   };
 
+  const finishTransform = () => {
+    commitTransform();
+  };
+
   const commitTransform = () => {
     const mesh = meshRef.current;
     if (!mesh || object.locked) return;
@@ -158,13 +183,18 @@ function ModelMesh({
 
   const showDimensions = selected || hoveredId === object.id;
   const renderedMesh = selected && !object.locked
-    ? <TransformControls mode={transformMode} translationSnap={gridSnap ? 1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform} onMouseUp={commitTransform}>{mesh}</TransformControls>
+    ? <TransformControls mode={transformMode} translationSnap={gridSnap ? 0.1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform} onMouseUp={commitTransform} onDraggingChanged={(dragging) => { if (!dragging) finishTransform(); }}>{mesh}</TransformControls>
     : mesh;
 
   return (
     <>
       {renderedMesh}
-      {showDimensions && object.visible && <DimensionLines object={object} />}
+      {showDimensions && object.visible && <DimensionLines object={object} editable={selected && !object.locked} onDimensionChange={(axis, value) => {
+        const dimensions = [...object.dimensions] as [number, number, number];
+        dimensions[axis] = value;
+        updateObject(object.id, { dimensions });
+      }} />}
+      {selected && object.visible && <axesHelper args={[Math.max(8, Math.min(...object.dimensions) * 0.8)]} position={object.position} />}
     </>
   );
 }
@@ -195,7 +225,7 @@ function SceneContents() {
       <directionalLight position={[40, 60, 30]} intensity={2.2} />
       <gridHelper args={[200, 40, '#66758c', '#303949']} position={[0, 0, 0]} />
       <WorkspaceRulers />
-      <axesHelper args={[30]} />
+
       {objects.filter((object) => !object.booleanSource).map((object) => (
         <ModelMesh
           key={object.id}
