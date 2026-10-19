@@ -44,7 +44,7 @@ function objectMeshXml(object: ModelObject, objectId: number, allObjects: ModelO
 }
 
 export function exportObjectsAs3mf(objects: ModelObject[], fileName = '3dcorpcod-model.3mf'): void {
-  const visibleObjects = objects.filter((object) => object.visible && !object.hole);
+  const visibleObjects = objects.filter((object) => object.visible && !object.hole && !object.booleanSource);
   if (!visibleObjects.length) throw new Error('Нет видимых тел для экспорта');
 
   const colorKeys = [...new Set(visibleObjects.map((object) => (object.color ?? '#8295b2').toUpperCase()))];
