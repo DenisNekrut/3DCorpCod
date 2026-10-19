@@ -198,3 +198,33 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
 textarea { min-width: 0; width: 100%; resize: vertical; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 6px; padding: 8px 7px; outline: none; font: inherit; font-size: 11px; }
 textarea:focus { border-color: var(--accent); }
 textarea:disabled { opacity: .5; cursor: not-allowed; }
+
+
+.dimension-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  padding: 3px 5px;
+  border: 1px solid #4776a9;
+  border-radius: 4px;
+  background: #111a27ee;
+  color: #d7eaff;
+  font: 10px/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+  box-shadow: 0 2px 8px #0005;
+}
+.dimension-label > span { color: #86baff; font-size: 9px; }
+.dimension-input {
+  width: 58px !important;
+  min-width: 58px !important;
+  padding: 3px 4px !important;
+  border: 1px solid #3c526e !important;
+  border-radius: 3px !important;
+  background: #0c121b !important;
+  color: #f2f7ff !important;
+  font: 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace !important;
+  text-align: right;
+  pointer-events: auto;
+}
+.dimension-input:focus { border-color: var(--accent) !important; }
+.dimension-input[readonly] { cursor: default; }
