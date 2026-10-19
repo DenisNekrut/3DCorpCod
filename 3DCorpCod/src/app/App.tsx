@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  Box, Circle, Cylinder, Cone, Donut, Pill, Triangle, Hexagon, Copy, Download,
+  Box, Circle, Cylinder, Cone, Donut, Pill, Triangle, Hexagon, Copy, Download, Ruler,
   FilePlus2, FolderOpen, Save, Trash2, Move, RotateCw, Scaling, LockKeyhole,
   Unlock, CircleSlash, Eye, Lock, Type, Undo2, Redo2, Magnet, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, FlipHorizontal, Group, Ungroup, Github, Plus, ArrowRight, CloudUpload,
 } from 'lucide-react';
@@ -65,6 +65,7 @@ export default function App() {
   const [screen, setScreen] = useState<'home' | 'editor'>('home');
   const [recentProjects, setRecentProjects] = useState<ProjectDocument[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [rulerEnabled, setRulerEnabled] = useState(false);
   const [customPresets, setCustomPresets] = useState<ModelObject[]>([]);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
@@ -456,6 +457,7 @@ export default function App() {
               <CircleSlash size={15} />{selectedObject?.hole ? 'Режим отверстия' : 'Сделать отверстием'}
             </button>
             <button className={`tool-button ${gridSnap ? 'active' : ''}`} onClick={toggleGridSnap} aria-pressed={gridSnap} title="Шаг привязки 1 мм"><Magnet size={15} /> Привязка {gridSnap ? 'вкл.' : 'выкл.'}</button>
+            <button className={`tool-button ${rulerEnabled ? 'active' : ''}`} onClick={() => setRulerEnabled((enabled) => !enabled)} aria-pressed={rulerEnabled} title="Измерить расстояние между двумя точками на рабочей плоскости"><Ruler size={15} /> Линейка {rulerEnabled ? 'вкл.' : 'выкл.'}</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'min')} title="Выровнять по краю X"><AlignStartHorizontal size={15} /> X min</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'center')} title="Выровнять по центру X"><AlignCenterHorizontal size={15} /> X центр</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(1, 'center')} title="Выровнять по центру Y"><AlignCenterHorizontal size={15} /> Y центр</button>
@@ -469,7 +471,7 @@ export default function App() {
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => booleanSelected('intersect')} title="Оставить только общую часть выбранных тел"><span aria-hidden="true">∩</span> Пересечение</button>
             <button className="tool-button" onClick={() => setPreviewOpen(true)}><Eye size={15} /> Предпросмотр</button>
           </div>
-          <Viewport />
+          <Viewport rulerEnabled={rulerEnabled} />
           <footer className="statusbar"><span><i className="status-indicator" /> {saveStatus}</span><span>{objects.length} объектов</span><span title={printWarnings.join('\n')}>{printWarnings.length ? `⚠ Проверка печати: ${printWarnings.length}` : '✓ Геометрия: базовая проверка пройдена'}</span><span>Единицы: мм</span></footer>
         </section>
 
