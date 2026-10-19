@@ -190,3 +190,11 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
   .toolbar-caption { display: none; }
   .tool-button { flex: 1 1 auto; }
 }
+
+
+.color-control { display: flex; align-items: center; gap: 9px; }
+.color-control input[type="color"] { width: 46px; height: 32px; padding: 3px; cursor: pointer; }
+.color-control span { color: var(--text); font: 11px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; }
+textarea { min-width: 0; width: 100%; resize: vertical; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 6px; padding: 8px 7px; outline: none; font: inherit; font-size: 11px; }
+textarea:focus { border-color: var(--accent); }
+textarea:disabled { opacity: .5; cursor: not-allowed; }
