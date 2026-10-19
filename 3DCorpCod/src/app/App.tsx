@@ -13,6 +13,7 @@ import type { ModelObject, PrimitiveType, ProjectDocument } from '../editor/type
 import { loadProject, saveProject } from '../storage/projectStorage';
 import { exportObjectsAsStl } from '../export/stlExport';
 import { exportObjectsAs3mf } from '../export/threeMfExport';
+import { exportObjectsAsObj } from '../export/objExport';
 import Viewport from '../components/Viewport';
 import PropertiesPanel from '../components/PropertiesPanel';
 import PreviewWindow from '../components/PreviewWindow';
@@ -271,14 +272,15 @@ export default function App() {
   };
 
 
-  const handleExport = (format: 'stl' | '3mf') => {
+  const handleExport = (format: 'stl' | '3mf' | 'obj') => {
     if (!objects.some((object) => object.visible && !object.hole && !object.booleanSource)) {
       setSaveStatus('Нет видимых тел для экспорта');
       return;
     }
     try {
       if (format === 'stl') exportObjectsAsStl(objects, `${safeName}.stl`);
-      else exportObjectsAs3mf(objects, `${safeName}.3mf`);
+      else if (format === '3mf') exportObjectsAs3mf(objects, `${safeName}.3mf`);
+      else exportObjectsAsObj(objects, `${safeName}.obj`);
       setSaveStatus(`Экспорт ${format.toUpperCase()} выполнен`);
     } catch (error) {
       console.error(`Export ${format} failed`, error);
@@ -392,6 +394,7 @@ export default function App() {
           <button className="icon-button" title="Предпросмотр готовой модели" onClick={() => setPreviewOpen(true)}><Eye size={17} /><span>Предпросмотр</span></button>
           <button className="icon-button" title="Скачать STL" onClick={() => handleExport('stl')}><Download size={17} /><span>STL</span></button>
           <button className="icon-button" title="Скачать 3MF" onClick={() => handleExport('3mf')}><Download size={17} /><span>3MF</span></button>
+          <button className="icon-button" title="Экспортировать модель в OBJ" onClick={() => handleExport('obj')}><Download size={17} /><span>OBJ</span></button>
           <input ref={importRef} className="hidden-input" type="file" accept=".3dcc,.json,application/json" onChange={(event) => { void openProject(event.target.files?.[0]); event.target.value = ''; }} />
         </div>
       </header>
