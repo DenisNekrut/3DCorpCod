@@ -49,13 +49,13 @@ function DimensionLines({ object, editable, onDimensionChange }: {
       <Line points={[[x - hx, y - hy - offset, z + hz + offset], [x + hx, y - hy - offset, z + hz + offset]]} color="#72b7ff" lineWidth={1} />
       <Line points={[[x - hx, y - hy - offset, z - hz - offset], [x - hx, y - hy - offset, z + hz + offset]]} color="#72b7ff" lineWidth={1} />
       <Line points={[[x + hx + offset, y - hy, z + hz + offset], [x + hx + offset, y + hy, z + hz + offset]]} color="#72b7ff" lineWidth={1} />
-      <Html position={[x, y - hy - offset, z + hz + offset]} center distanceFactor={100}>
+      <Html position={[x, y - hy - offset, z + hz + offset]} center distanceFactor={100} style={{ pointerEvents: editable ? 'auto' : 'none' }}>
         <span className="dimension-label"><span>Ш</span>{input(0, width)}</span>
       </Html>
-      <Html position={[x - hx, y - hy - offset, z]} center distanceFactor={100}>
+      <Html position={[x - hx, y - hy - offset, z]} center distanceFactor={100} style={{ pointerEvents: editable ? 'auto' : 'none' }}>
         <span className="dimension-label"><span>Г</span>{input(2, depth)}</span>
       </Html>
-      <Html position={[x + hx + offset, y, z + hz + offset]} center distanceFactor={100}>
+      <Html position={[x + hx + offset, y, z + hz + offset]} center distanceFactor={100} style={{ pointerEvents: editable ? 'auto' : 'none' }}>
         <span className="dimension-label"><span>В</span>{input(1, height)}</span>
       </Html>
     </group>
@@ -226,7 +226,7 @@ function ModelMesh({
         dimensions[axis] = value;
         updateObject(object.id, { dimensions });
       }} />}
-      {selected && object.visible && <axesHelper args={[Math.max(8, Math.min(...object.dimensions) * 0.8)]} position={object.position} />}
+      {selected && object.visible && <group position={object.position}><axesHelper args={[Math.max(8, Math.min(...object.dimensions) * 0.8)]} /></group>}
     </>
   );
 }
@@ -255,7 +255,7 @@ function SceneContents() {
       <color attach="background" args={['#171c26']} />
       <ambientLight intensity={1.5} />
       <directionalLight position={[40, 60, 30]} intensity={2.2} />
-      <gridHelper args={[200, 40, '#66758c', '#303949']} position={[0, 0, 0]} />
+      <gridHelper args={[200, 200, '#526780', '#263244']} position={[0, 0, 0]} />
       <WorkspaceRulers />
 
       {objects.filter((object) => !object.booleanSource).map((object) => (
@@ -283,7 +283,8 @@ export default function Viewport() {
       <Canvas camera={{ position: [70, 65, 80], fov: 45 }} dpr={[1, 2]} onPointerMissed={() => selectObject(null)}>
         <SceneContents />
       </Canvas>
-      <div className="viewport-label">РАБОЧАЯ ОБЛАСТЬ · ММ</div>
+      <div className="viewport-label">РАБОЧАЯ ОБЛАСТЬ · СЕТКА 1 ММ</div>
+      <div className="viewport-watermark" aria-hidden="true"><span>3DCorpCod</span><small>Автор: Некрут Денис</small></div>
       <div className="viewport-help">Линейки в мм · размеры при выборе/наведении. Замок блокирует объект. Ctrl+S — сохранить, Ctrl+O — открыть, Ctrl+D — дублировать, Delete — удалить.</div>
     </div>
   );
