@@ -117,14 +117,33 @@ function ModelMesh({
     if (!evaluatedGeometry) geometry.dispose();
   }, [geometry, evaluatedGeometry]);
 
+  const [shiftHeld, setShiftHeld] = useState(false);
+
+  useEffect(() => {
+    const down = (event: KeyboardEvent) => { if (event.key === 'Shift') setShiftHeld(true); };
+    const up = (event: KeyboardEvent) => { if (event.key === 'Shift') setShiftHeld(false); };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    window.addEventListener('blur', () => setShiftHeld(false));
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+    };
+  }, []);
+
+  // Keep transforms transient while dragging. Updating Zustand on every pointer
+  // movement made React re-apply stale controlled props and snap the mesh back.
   const syncTransform = () => {
     const mesh = meshRef.current;
-    if (!mesh || object.locked || transformMode === 'scale') return;
-    if (transformMode === 'translate') {
-      updateObject(object.id, { position: [mesh.position.x, mesh.position.y, mesh.position.z] });
-    } else {
-      updateObject(object.id, { rotation: [mesh.rotation.x * 180 / Math.PI, mesh.rotation.y * 180 / Math.PI, mesh.rotation.z * 180 / Math.PI] });
-    }
+    if (!mesh || object.locked || transformMode !== 'scale' || !shiftHeld) return;
+    const dimensions = object.dimensions;
+    const values = [mesh.scale.x, mesh.scale.y, mesh.scale.z];
+    values.forEach((scale, axis) => {
+      const base = dimensions[axis];
+      const next = Math.max(1, Math.round(base * scale));
+      values[axis] = next / base;
+    });
+    mesh.scale.set(values[0], values[1], values[2]);
   };
 
   const commitTransform = () => {
@@ -168,14 +187,12 @@ function ModelMesh({
     const controls = controlsRef.current;
     if (!controls) return;
     const eventTarget = controls as unknown as {
-      addEventListener: (type: string, listener: (event: { value: boolean }) => void) => void;
-      removeEventListener: (type: string, listener: (event: { value: boolean }) => void) => void;
+      addEventListener: (type: string, listener: () => void) => void;
+      removeEventListener: (type: string, listener: () => void) => void;
     };
-    const handleDraggingChanged = (event: { value: boolean }) => {
-      if (!event.value) commitTransformRef.current();
-    };
-    eventTarget.addEventListener('dragging-changed', handleDraggingChanged);
-    return () => eventTarget.removeEventListener('dragging-changed', handleDraggingChanged);
+    const handleMouseUp = () => commitTransformRef.current();
+    eventTarget.addEventListener('mouseUp', handleMouseUp);
+    return () => eventTarget.removeEventListener('mouseUp', handleMouseUp);
   }, [selected]);
 
   const mesh = (
@@ -205,7 +222,7 @@ function ModelMesh({
 
   const showDimensions = selected || hoveredId === object.id;
   const renderedMesh = selected && !object.locked
-    ? <TransformControls ref={controlsRef} mode={transformMode} translationSnap={gridSnap ? 0.1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform}>{mesh}</TransformControls>
+    ? <TransformControls ref={controlsRef} mode={transformMode} translationSnap={gridSnap ? 1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform} onMouseUp={() => commitTransformRef.current()}>{mesh}</TransformControls>
     : mesh;
 
   return (
