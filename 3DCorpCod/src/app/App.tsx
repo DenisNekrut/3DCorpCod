@@ -156,6 +156,47 @@ export default function App() {
 
   const safeName = projectName.trim().replace(/[^a-z0-9а-яё_-]+/gi, '-').replace(/^-+|-+$/g, '') || '3dcorpcod-model';
 
+  const saveToGitHub = async () => {
+    try {
+      let tokenValue = sessionStorage.getItem('3dcc-github-token');
+      if (!tokenValue) {
+        const entered = window.prompt('Вставь GitHub Personal Access Token с правом Contents: Read and write. Токен хранится только в текущей сессии браузера:');
+        if (!entered?.trim()) return;
+        tokenValue = entered.trim();
+        sessionStorage.setItem('3dcc-github-token', tokenValue);
+      }
+      const token = tokenValue;
+      const repository = (window.prompt('Репозиторий GitHub в формате владелец/репозиторий:', 'DenisNekrut/3DCorpCod') ?? '').trim();
+      if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)) {
+        setSaveStatus('Укажи репозиторий в формате владелец/репозиторий');
+        return;
+      }
+      const path = 'projects/' + safeName + '.3dcc';
+      const url = 'https://api.github.com/repos/' + repository + '/contents/' + path.split('/').map(encodeURIComponent).join('/');
+      const headers = { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+      const existing = await fetch(url, { headers });
+      let sha: string | undefined;
+      if (existing.ok) sha = ((await existing.json()) as { sha?: string }).sha;
+      else if (existing.status !== 404) throw new Error('GitHub: ' + existing.status + ' — проверь токен и права доступа');
+      const bytes = new TextEncoder().encode(JSON.stringify(getProject(), null, 2));
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Save 3DCorpCod project: ' + projectName, content: btoa(binary), ...(sha ? { sha } : {}) }),
+      });
+      if (!response.ok) {
+        const detail = await response.json().catch(() => ({})) as { message?: string };
+        throw new Error(detail.message ?? 'GitHub: ' + response.status);
+      }
+      setSaveStatus('Сохранено в GitHub: ' + repository + '/' + path);
+    } catch (error) {
+      setSaveStatus(error instanceof Error ? error.message : 'Не удалось сохранить в GitHub');
+    }
+  };
+
+
   const handleExport = (format: 'stl' | '3mf') => {
     if (!objects.some((object) => object.visible && !object.hole && !object.booleanSource)) {
       setSaveStatus('Нет видимых тел для экспорта');
@@ -270,7 +311,9 @@ export default function App() {
           <button className="icon-button" title="Отменить (Ctrl+Z)" onClick={undo} disabled={!undoStack.length}><Undo2 size={17} /><span>Отменить</span></button>
           <button className="icon-button" title="Повторить (Ctrl+Y)" onClick={redo} disabled={!redoStack.length}><Redo2 size={17} /><span>Повторить</span></button>
           <button className="icon-button" title="Открыть проект" onClick={() => importRef.current?.click()}><FolderOpen size={17} /><span>Открыть</span></button>
-          <button className="icon-button" title="Сохранить проект" onClick={downloadProject}><Save size={17} /><span>Проект</span></button>
+          <button className="icon-button" title="Скачать проект" onClick={downloadProject}><Save size={17} /><span>Скачать</span></button>
+          <button className="icon-button" title="Сохранить проект в GitHub" onClick={() => void saveToGitHub()}><Github size={17} /><span>GitHub</span></button>
+          <button className="icon-button" title="На главную страницу проектов" onClick={() => setScreen('home')}><FolderOpen size={17} /><span>Главная</span></button>
           <button className="icon-button" title="Предпросмотр готовой модели" onClick={() => setPreviewOpen(true)}><Eye size={17} /><span>Предпросмотр</span></button>
           <button className="icon-button" title="Скачать STL" onClick={() => handleExport('stl')}><Download size={17} /><span>STL</span></button>
           <button className="icon-button" title="Скачать 3MF" onClick={() => handleExport('3mf')}><Download size={17} /><span>3MF</span></button>
