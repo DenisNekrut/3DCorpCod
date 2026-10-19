@@ -33,3 +33,7 @@ jobs:
       - name: Type-check and build
         working-directory: 3DCorpCod
         run: npm run build
+
+      - name: Run regression tests
+        working-directory: 3DCorpCod
+        run: npm test
