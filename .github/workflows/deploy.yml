@@ -1,4 +1,4 @@
-name: Deploy 3DCorpCod to GitHub Pages
+name: Deploy 3DCorpCod Web App
 
 on:
   push:
@@ -27,24 +27,30 @@ jobs:
       run:
         working-directory: 3DCorpCod
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+
       - name: Build web app
-        run: npm run build
-      - name: Setup Pages
+        run: |
+          npm run build
+          test -s dist/index.html
+
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Upload Pages artifact
+
+      - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: 3DCorpCod/dist
-      - name: Deploy to GitHub Pages
+
+      - name: Deploy site
         id: deployment
         uses: actions/deploy-pages@v4
