@@ -35,6 +35,7 @@ export function createPrimitive(type: PrimitiveType, index: number): ModelObject
     dimensions: [...dimensions],
     visible: true,
     color: '#8295b2',
+    layer: 'Основной',
     ...(type === 'text' ? { textContent: 'Текст', fontSize: 10, textDepth: 2, textBevel: false, textBevelSize: 0.3 } : {}),
     edgeTreatment: 'none',
     edgeSize: 1,
