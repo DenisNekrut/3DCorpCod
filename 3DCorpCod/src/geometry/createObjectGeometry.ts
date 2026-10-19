@@ -7,7 +7,6 @@ import {
   TorusGeometry,
   Vector3,
   Float32BufferAttribute,
-  type BufferGeometry,
 } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
