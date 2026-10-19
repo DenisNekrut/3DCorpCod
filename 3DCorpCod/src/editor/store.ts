@@ -30,6 +30,7 @@ interface EditorState {
   gridSnap: boolean;
   undoStack: Snapshot[];
   redoStack: Snapshot[];
+  lastHistoryAt?: number;
   addPrimitive: (type: PrimitiveType) => void;
   selectObject: (id: string | null) => void;
   toggleSelectObject: (id: string) => void;
