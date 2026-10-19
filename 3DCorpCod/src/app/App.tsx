@@ -340,6 +340,16 @@ export default function App() {
     setSaveStatus('Новый проект');
   };
 
+  const deleteRecentProject = (project: ProjectDocument) => {
+    const confirmed = window.confirm(`Удалить проект «${project.name}» из списка недавних проектов этого браузера? Скачанные файлы и копии в GitHub не будут удалены.`);
+    if (!confirmed) return;
+    setRecentProjects((current) => {
+      const next = current.filter((item) => !(item.name === project.name && item.updatedAt === project.updatedAt));
+      try { localStorage.setItem('3dcc-recent-projects-v1', JSON.stringify(next)); } catch { /* storage may be unavailable */ }
+      return next;
+    });
+  };
+
   if (screen === 'home') {
     return (
       <main className="home-shell">
@@ -364,11 +374,14 @@ export default function App() {
           {recentProjects.length ? (
             <div className="home-project-grid">
               {recentProjects.map((project, index) => (
-                <button className="home-project-card" key={project.name + project.updatedAt + index} onClick={() => { loadProjectIntoStore(project); setScreen('editor'); setSaveStatus('Проект открыт'); }}>
-                  <div className="home-project-preview"><div className="preview-cube" /><span>{project.objects.length} объектов</span></div>
-                  <div className="home-project-info"><strong>{project.name}</strong><span>Изменён: {new Date(project.updatedAt).toLocaleDateString()}</span></div>
-                  <ArrowRight size={16} />
-                </button>
+                <article className="home-project-card" key={project.name + project.updatedAt + index}>
+                  <button className="home-project-open" onClick={() => { loadProjectIntoStore(project); setScreen('editor'); setSaveStatus('Проект открыт'); }} aria-label={`Открыть проект ${project.name}`}>
+                    <div className="home-project-preview"><div className="preview-cube" /><span>{project.objects.length} объектов</span></div>
+                    <div className="home-project-info"><strong>{project.name}</strong><span>Изменён: {new Date(project.updatedAt).toLocaleDateString()}</span></div>
+                    <ArrowRight size={16} />
+                  </button>
+                  <button className="home-project-delete" onClick={() => deleteRecentProject(project)} title={`Удалить ${project.name} из недавних`} aria-label={`Удалить проект ${project.name}`}><Trash2 size={15} /><span>Удалить</span></button>
+                </article>
               ))}
             </div>
           ) : <div className="home-empty"><Box size={28} /><strong>Пока нет сохранённых проектов</strong><span>Создай проект — он появится здесь автоматически.</span></div>}
