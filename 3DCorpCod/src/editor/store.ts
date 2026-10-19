@@ -30,6 +30,7 @@ interface EditorState {
   gridSnap: boolean;
   undoStack: Snapshot[];
   redoStack: Snapshot[];
+  clipboard: ModelObject[];
   lastHistoryAt?: number;
   addPrimitive: (type: PrimitiveType) => void;
   addObjectFromPreset: (preset: ModelObject) => void;
@@ -40,6 +41,8 @@ interface EditorState {
   toggleGridSnap: () => void;
   deleteSelected: () => void;
   duplicateSelected: () => void;
+  copySelected: () => void;
+  pasteCopied: () => void;
   toggleLockSelected: () => void;
   toggleHoleSelected: () => void;
   undo: () => void;
@@ -62,6 +65,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   gridSnap: false,
   undoStack: [],
   redoStack: [],
+  clipboard: [],
   addPrimitive: (type) => set((state) => {
     const object = createPrimitive(type, state.objects.length);
     return { ...record(state), objects: [...state.objects, object], selectedId: object.id, selectedIds: [object.id] };
