@@ -15,6 +15,10 @@ function DimensionLines({ object, editable, onDimensionChange }: {
 }) {
   const [width, height, depth] = object.dimensions;
   const [x, y, z] = object.position;
+  const [drafts, setDrafts] = useState<[string, string, string]>(object.dimensions.map((value) => value.toFixed(1)) as [string, string, string]);
+  useEffect(() => {
+    setDrafts(object.dimensions.map((value) => value.toFixed(1)) as [string, string, string]);
+  }, [object.dimensions[0], object.dimensions[1], object.dimensions[2]]);
   const hx = width / 2;
   const hy = height / 2;
   const hz = depth / 2;
@@ -26,14 +30,17 @@ function DimensionLines({ object, editable, onDimensionChange }: {
       type="number"
       min="0.1"
       step="0.1"
-      value={value.toFixed(1)}
+      value={drafts[axis]}
       readOnly={!editable}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
-      onChange={(event) => {
-        const next = Number(event.target.value);
-        if (Number.isFinite(next) && next >= 0.1) onDimensionChange(axis, Math.round(next * 10) / 10);
+      onChange={(event) => setDrafts((current) => current.map((draft, index) => index === axis ? event.target.value : draft) as [string, string, string])}
+      onBlur={() => {
+        const next = Number(drafts[axis]);
+        if (editable && Number.isFinite(next) && next >= 0.1) onDimensionChange(axis, Math.round(next * 10) / 10);
+        else setDrafts((current) => current.map((draft, index) => index === axis ? value.toFixed(1) : draft) as [string, string, string]);
       }}
+      onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }}
     />
   );
   return (
@@ -183,7 +190,7 @@ function ModelMesh({
 
   const showDimensions = selected || hoveredId === object.id;
   const renderedMesh = selected && !object.locked
-    ? <TransformControls mode={transformMode} translationSnap={gridSnap ? 0.1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform} onMouseUp={commitTransform} onDraggingChanged={(dragging) => { if (!dragging) finishTransform(); }}>{mesh}</TransformControls>
+    ? <TransformControls mode={transformMode} translationSnap={gridSnap ? 0.1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform} onDraggingChanged={(event) => { if (!event.value) finishTransform(); }}>{mesh}</TransformControls>
     : mesh;
 
   return (
