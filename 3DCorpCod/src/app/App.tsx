@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Box, Circle, Cylinder, Cone, Donut, Pill, Triangle, Hexagon, Copy, Download,
   FilePlus2, FolderOpen, Save, Trash2, Move, RotateCw, Scaling, LockKeyhole,
-  Unlock, CircleSlash, Eye, Lock, Type, Undo2, Redo2, Magnet, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, FlipHorizontal, Group, Ungroup,
+  Unlock, CircleSlash, Eye, Lock, Type, Undo2, Redo2, Magnet, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, FlipHorizontal, Group, Ungroup, Github, Plus, ArrowRight, CloudUpload,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEditorStore } from '../editor/store';
@@ -59,6 +59,8 @@ export default function App() {
   const getProject = useEditorStore((state) => state.getProject);
   const loadProjectIntoStore = useEditorStore((state) => state.loadProject);
   const [saveStatus, setSaveStatus] = useState('Локальный проект');
+  const [screen, setScreen] = useState<'home' | 'editor'>('home');
+  const [recentProjects, setRecentProjects] = useState<ProjectDocument[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [customPresets, setCustomPresets] = useState<ModelObject[]>([]);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
@@ -67,6 +69,27 @@ export default function App() {
   const selectedLocked = Boolean(selectedObject?.locked);
   const printWarnings = inspectPrintability(objects).map((warning) => `${warning.objectName}: ${warning.message}`);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('3dcc-recent-projects-v1');
+      if (saved) setRecentProjects(JSON.parse(saved) as ProjectDocument[]);
+    } catch { setRecentProjects([]); }
+  }, []);
+
+  useEffect(() => {
+    if (!objects.length) return;
+    const timeout = window.setTimeout(() => {
+      const project = getProject();
+      try {
+        const saved = localStorage.getItem('3dcc-recent-projects-v1');
+        const previous = saved ? JSON.parse(saved) as ProjectDocument[] : [];
+        const next = [project, ...previous.filter((item) => item.name !== project.name)].slice(0, 8);
+        localStorage.setItem('3dcc-recent-projects-v1', JSON.stringify(next));
+        setRecentProjects(next);
+      } catch { /* recent-project list is optional */ }
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [objects, projectName, getProject]);
   useEffect(() => {
     document.documentElement.dataset.theme = 'dark';
     try {
@@ -124,6 +147,7 @@ export default function App() {
         throw new Error('Unsupported project schema');
       }
       loadProjectIntoStore(project);
+      setScreen('editor');
       setSaveStatus('Проект открыт');
     } catch {
       setSaveStatus('Не удалось открыть файл проекта');
@@ -190,6 +214,51 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [deleteSelected, downloadProject, duplicateSelected, copySelected, pasteCopied, selectedId, previewOpen, undo, redo, setTransformMode, toggleGridSnap]);
 
+  const createNewProject = () => {
+    const name = window.prompt('Название нового проекта:', 'Новый проект');
+    if (!name?.trim()) return;
+    loadProjectIntoStore({ schemaVersion: 1, name: name.trim(), units: 'mm', objects: [], updatedAt: new Date().toISOString() });
+    setScreen('editor');
+    setSaveStatus('Новый проект');
+  };
+
+  if (screen === 'home') {
+    return (
+      <main className="home-shell">
+        <header className="home-topbar">
+          <div className="brand-mark">3D</div>
+          <div className="brand-copy"><strong>3DCorpCod</strong><span>3D MODELING STUDIO</span></div>
+          <span className="home-version">ПРОЕКТЫ · 3D-ПЕЧАТЬ · ММ</span>
+        </header>
+        <section className="home-hero">
+          <div className="home-eyebrow">ПРОСТРАНСТВО ДЛЯ СОЗДАНИЯ</div>
+          <h1>Твои модели.<br /><span>Точная геометрия.</span></h1>
+          <p>Создавай 3D-модели, редактируй размеры с точностью 0,1 мм и экспортируй их для 3D-печати.</p>
+          <div className="home-actions">
+            <button className="home-primary" onClick={createNewProject}><Plus size={18} /> Новый проект</button>
+            <button className="home-secondary" onClick={() => importRef.current?.click()}><FolderOpen size={17} /> Открыть файл</button>
+            <button className="home-secondary" onClick={() => setScreen('editor')}><ArrowRight size={17} /> Продолжить работу</button>
+          </div>
+          <input ref={importRef} className="hidden-input" type="file" accept=".3dcc,.json,application/json" onChange={(event) => { void openProject(event.target.files?.[0]); event.target.value = ''; }} />
+        </section>
+        <section className="home-projects">
+          <div className="home-section-title"><div><span>ТВОЯ КОЛЛЕКЦИЯ</span><h2>Недавние проекты</h2></div><span className="home-project-count">{recentProjects.length} / 8</span></div>
+          {recentProjects.length ? (
+            <div className="home-project-grid">
+              {recentProjects.map((project, index) => (
+                <button className="home-project-card" key={project.name + project.updatedAt + index} onClick={() => { loadProjectIntoStore(project); setScreen('editor'); setSaveStatus('Проект открыт'); }}>
+                  <div className="home-project-preview"><div className="preview-cube" /><span>{project.objects.length} объектов</span></div>
+                  <div className="home-project-info"><strong>{project.name}</strong><span>Изменён: {new Date(project.updatedAt).toLocaleDateString()}</span></div>
+                  <ArrowRight size={16} />
+                </button>
+              ))}
+            </div>
+          ) : <div className="home-empty"><Box size={28} /><strong>Пока нет сохранённых проектов</strong><span>Создай проект — он появится здесь автоматически.</span></div>}
+          <div className="home-storage-note"><CloudUpload size={16} /> Проекты сохраняются в браузере. Из редактора их можно сохранить в GitHub или скачать файлом.</div>
+        </section>
+      </main>
+    );
+  }
   return (
     <main className="app-shell">
       <header className="topbar">
