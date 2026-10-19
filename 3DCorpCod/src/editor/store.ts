@@ -47,6 +47,7 @@ interface EditorState {
   mirrorSelected: (axis: Axis) => void;
   groupSelected: () => void;
   ungroupSelected: () => void;
+  booleanSelected: (operation: 'union' | 'subtract' | 'intersect') => void;
   loadProject: (project: ProjectDocument) => void;
   getProject: () => ProjectDocument;
 }
@@ -169,6 +170,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (ids.size < 2) return state;
     const groupId = crypto.randomUUID();
     return { ...record(state), objects: state.objects.map((object) => ids.has(object.id) && !object.locked ? { ...object, groupId } : object) };
+  }),
+  booleanSelected: (operation) => set((state) => {
+    const ids = new Set(state.selectedIds.length ? state.selectedIds : state.selectedId ? [state.selectedId] : []);
+    const selected = state.objects.filter((object) => ids.has(object.id) && !object.locked && !object.hole);
+    if (selected.length < 2) return state;
+    const resultId = state.selectedId && ids.has(state.selectedId) ? state.selectedId : selected[0].id;
+    const groupId = crypto.randomUUID();
+    return {
+      ...record(state),
+      objects: state.objects.map((object) => {
+        if (!ids.has(object.id)) return object;
+        if (object.id === resultId) return { ...object, groupId, booleanOperation: operation, booleanSource: false };
+        return { ...object, groupId, booleanSource: true, booleanOperation: undefined };
+      }),
+      selectedId: resultId,
+      selectedIds: [resultId],
+    };
   }),
   ungroupSelected: () => set((state) => {
     const ids = new Set(state.selectedIds.length ? state.selectedIds : state.selectedId ? [state.selectedId] : []);
