@@ -10,7 +10,7 @@ const xmlEscape = (value: string) => value
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&apos;');
 
-function objectMeshXml(object: ModelObject, objectId: number, allObjects: ModelObject[]): string {
+function objectMeshXml(object: ModelObject, objectId: number, allObjects: ModelObject[], materialIndex: number): string {
   const geometry = createBooleanGeometry(object, allObjects);
   const position = geometry.getAttribute('position');
   const index = geometry.getIndex();
@@ -36,7 +36,7 @@ function objectMeshXml(object: ModelObject, objectId: number, allObjects: ModelO
     const a = index ? index.getX(i) : i;
     const b = index ? index.getX(i + 1) : i + 1;
     const c = index ? index.getX(i + 2) : i + 2;
-    triangles.push(`<triangle v1="${a}" v2="${b}" v3="${c}"/>`);
+    triangles.push(`<triangle v1="${a}" v2="${b}" v3="${c}" pid="1" p1="${materialIndex}"/>`);
   }
 
   geometry.dispose();
@@ -47,8 +47,16 @@ export function exportObjectsAs3mf(objects: ModelObject[], fileName = '3dcorpcod
   const visibleObjects = objects.filter((object) => object.visible && !object.hole);
   if (!visibleObjects.length) throw new Error('Нет видимых тел для экспорта');
 
-  const resources = visibleObjects.map((object, index) => objectMeshXml(object, index + 1, objects)).join('');
-  const buildItems = visibleObjects.map((_, index) => `<item objectid="${index + 1}"/>`).join('');
+  const colorKeys = [...new Set(visibleObjects.map((object) => (object.color ?? '#8295b2').toUpperCase()))];
+  const materials = `<basematerials id="1">${colorKeys.map((color) => {
+    const hex = /^#[0-9A-F]{6}$/.test(color) ? color : '#8295B2';
+    return `<base name="${hex}" displaycolor="${hex}FF"/>`;
+  }).join('')}</basematerials>`;
+  const resources = materials + visibleObjects.map((object, index) => {
+    const color = (object.color ?? '#8295b2').toUpperCase();
+    return objectMeshXml(object, index + 2, objects, colorKeys.indexOf(color));
+  }).join('');
+  const buildItems = visibleObjects.map((_, index) => `<item objectid="${index + 2}"/>`).join('');
   const model = `<?xml version="1.0" encoding="UTF-8"?>\n<model unit="millimeter" xml:lang="ru-RU" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><metadata name="Title">3DCorpCod model</metadata><resources>${resources}</resources><build>${buildItems}</build></model>`;
   const contentTypes = `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>`;
   const relationships = `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>`;
