@@ -67,6 +67,8 @@ function ModelMesh({
   const selected = useEditorStore((state) => state.selectedId === object.id);
   const transformMode = useEditorStore((state) => state.transformMode);
   const selectObject = useEditorStore((state) => state.selectObject);
+  const toggleSelectObject = useEditorStore((state) => state.toggleSelectObject);
+  const gridSnap = useEditorStore((state) => state.gridSnap);
   const updateObject = useEditorStore((state) => state.updateObject);
   const meshRef = useRef<Mesh>(null);
   const geometry = useMemo(() => evaluatedGeometry ?? createObjectGeometry(object), [
@@ -140,7 +142,7 @@ function ModelMesh({
       onPointerOut={() => setHoveredId(null)}
       onClick={(event) => {
         event.stopPropagation();
-        selectObject(object.id);
+        if (event.nativeEvent.shiftKey) toggleSelectObject(object.id); else selectObject(object.id);
       }}
     >
       <meshStandardMaterial
@@ -156,7 +158,7 @@ function ModelMesh({
 
   const showDimensions = selected || hoveredId === object.id;
   const renderedMesh = selected && !object.locked
-    ? <TransformControls mode={transformMode} onObjectChange={syncTransform} onMouseUp={commitTransform}>{mesh}</TransformControls>
+    ? <TransformControls mode={transformMode} translationSnap={gridSnap ? 1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform} onMouseUp={commitTransform}>{mesh}</TransformControls>
     : mesh;
 
   return (
