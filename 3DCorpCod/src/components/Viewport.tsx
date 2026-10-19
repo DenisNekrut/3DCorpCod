@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Html, Line, OrbitControls, TransformControls } from '@react-three/drei';
 import { Mesh } from 'three';
 import type { BufferGeometry } from 'three';
+import { TransformControls as TransformControlsImpl } from 'three-stdlib';
 import { useEditorStore } from '../editor/store';
 import type { ModelObject } from '../editor/types';
 import { createObjectGeometry } from '../geometry/createObjectGeometry';
@@ -99,6 +100,8 @@ function ModelMesh({
   const gridSnap = useEditorStore((state) => state.gridSnap);
   const updateObject = useEditorStore((state) => state.updateObject);
   const meshRef = useRef<Mesh>(null);
+  const controlsRef = useRef<TransformControlsImpl | null>(null);
+  const commitTransformRef = useRef<() => void>(() => {});
   const geometry = useMemo(() => evaluatedGeometry ?? createObjectGeometry(object), [
     evaluatedGeometry,
     object.type,
@@ -122,10 +125,6 @@ function ModelMesh({
     } else {
       updateObject(object.id, { rotation: [mesh.rotation.x * 180 / Math.PI, mesh.rotation.y * 180 / Math.PI, mesh.rotation.z * 180 / Math.PI] });
     }
-  };
-
-  const finishTransform = () => {
-    commitTransform();
   };
 
   const commitTransform = () => {
@@ -163,6 +162,18 @@ function ModelMesh({
     }
   };
 
+  commitTransformRef.current = commitTransform;
+
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    const handleDraggingChanged = (event: { value: boolean }) => {
+      if (!event.value) commitTransformRef.current();
+    };
+    controls.addEventListener('dragging-changed', handleDraggingChanged);
+    return () => controls.removeEventListener('dragging-changed', handleDraggingChanged);
+  }, [selected]);
+
   const mesh = (
     <mesh
       ref={meshRef}
@@ -190,7 +201,7 @@ function ModelMesh({
 
   const showDimensions = selected || hoveredId === object.id;
   const renderedMesh = selected && !object.locked
-    ? <TransformControls mode={transformMode} translationSnap={gridSnap ? 0.1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform} onDraggingChanged={(event) => { if (!event.value) finishTransform(); }}>{mesh}</TransformControls>
+    ? <TransformControls ref={controlsRef} mode={transformMode} translationSnap={gridSnap ? 0.1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform}>{mesh}</TransformControls>
     : mesh;
 
   return (
