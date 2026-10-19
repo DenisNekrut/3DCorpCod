@@ -122,12 +122,14 @@ function ModelMesh({
   useEffect(() => {
     const down = (event: KeyboardEvent) => { if (event.key === 'Shift') setShiftHeld(true); };
     const up = (event: KeyboardEvent) => { if (event.key === 'Shift') setShiftHeld(false); };
+    const blur = () => setShiftHeld(false);
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
-    window.addEventListener('blur', () => setShiftHeld(false));
+    window.addEventListener('blur', blur);
     return () => {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
+      window.removeEventListener('blur', blur);
     };
   }, []);
 
@@ -140,7 +142,10 @@ function ModelMesh({
     const values = [mesh.scale.x, mesh.scale.y, mesh.scale.z];
     values.forEach((scale, axis) => {
       const base = dimensions[axis];
-      const next = Math.max(1, Math.round(base * scale));
+      // Snap only axes currently being scaled; preserve pre-existing fractions.
+      if (Math.abs(scale - 1) < 0.0001) return;
+      const deltaMm = Math.round(base * scale - base);
+      const next = Math.max(0.1, base + deltaMm);
       values[axis] = next / base;
     });
     mesh.scale.set(values[0], values[1], values[2]);
