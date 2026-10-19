@@ -133,7 +133,7 @@ export default function App() {
   const safeName = projectName.trim().replace(/[^a-z0-9а-яё_-]+/gi, '-').replace(/^-+|-+$/g, '') || '3dcorpcod-model';
 
   const handleExport = (format: 'stl' | '3mf') => {
-    if (!objects.some((object) => object.visible && !object.hole)) {
+    if (!objects.some((object) => object.visible && !object.hole && !object.booleanSource)) {
       setSaveStatus('Нет видимых тел для экспорта');
       return;
     }
