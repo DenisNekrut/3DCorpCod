@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Circle, Cylinder, Cone, Donut, Pill, Triangle, Hexagon, Copy, Download, FilePlus2, FolderOpen, Moon, Save, Sun, Trash2 } from 'lucide-react';
+import { Box, Circle, Cylinder, Cone, Donut, Pill, Triangle, Hexagon, Copy, Download, FilePlus2, FolderOpen, Save, Trash2, Move, RotateCw, Scaling } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEditorStore } from '../editor/store';
 import type { PrimitiveType, ProjectDocument } from '../editor/types';
 import { loadProject, saveProject } from '../storage/projectStorage';
 import { exportObjectsAsStl } from '../export/stlExport';
+import { exportObjectsAs3mf } from '../export/threeMfExport';
 import Viewport from '../components/Viewport';
 import PropertiesPanel from '../components/PropertiesPanel';
 import '../styles/app.css';
@@ -24,20 +25,20 @@ export default function App() {
   const projectName = useEditorStore((state) => state.projectName);
   const objects = useEditorStore((state) => state.objects);
   const selectedId = useEditorStore((state) => state.selectedId);
-  const theme = useEditorStore((state) => state.theme);
+  const transformMode = useEditorStore((state) => state.transformMode);
   const addPrimitive = useEditorStore((state) => state.addPrimitive);
   const selectObject = useEditorStore((state) => state.selectObject);
   const deleteSelected = useEditorStore((state) => state.deleteSelected);
   const duplicateSelected = useEditorStore((state) => state.duplicateSelected);
-  const toggleTheme = useEditorStore((state) => state.toggleTheme);
+  const setTransformMode = useEditorStore((state) => state.setTransformMode);
   const getProject = useEditorStore((state) => state.getProject);
   const loadProjectIntoStore = useEditorStore((state) => state.loadProject);
   const [saveStatus, setSaveStatus] = useState('Локальный проект');
   const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
+    document.documentElement.dataset.theme = 'dark';
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -64,7 +65,7 @@ export default function App() {
     anchor.href = url;
     anchor.download = 'project.3dcc';
     anchor.click();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const openProject = async (file?: File) => {
@@ -81,18 +82,20 @@ export default function App() {
     }
   };
 
-  const handleExportScene = () => {
+  const safeName = projectName.trim().replace(/[^a-z0-9а-яё_-]+/gi, '-').replace(/^-+|-+$/g, '') || '3dcorpcod-model';
+
+  const handleExport = (format: 'stl' | '3mf') => {
     if (!objects.some((object) => object.visible)) {
       setSaveStatus('Нет видимых объектов для экспорта');
       return;
     }
     try {
-      const safeName = projectName.trim().replace(/[^a-z0-9а-яё_-]+/gi, '-').replace(/^-+|-+$/g, '') || '3dcorpcod-model';
-      exportObjectsAsStl(objects, `${safeName}.stl`);
-      setSaveStatus('STL экспортирован');
+      if (format === 'stl') exportObjectsAsStl(objects, `${safeName}.stl`);
+      else exportObjectsAs3mf(objects, `${safeName}.3mf`);
+      setSaveStatus(`Экспорт ${format.toUpperCase()} выполнен`);
     } catch (error) {
-      console.error('STL export failed', error);
-      setSaveStatus('Ошибка экспорта STL');
+      console.error(`Export ${format} failed`, error);
+      setSaveStatus(`Ошибка экспорта ${format.toUpperCase()}`);
     }
   };
 
@@ -105,9 +108,9 @@ export default function App() {
         <div className="project-title">{projectName}</div>
         <div className="top-actions">
           <button className="icon-button" title="Открыть проект" onClick={() => importRef.current?.click()}><FolderOpen size={17} /><span>Открыть</span></button>
-          <button className="icon-button" title="Сохранить проект" onClick={downloadProject}><Save size={17} /><span>Сохранить</span></button>
-          <button className="icon-button" title="Экспорт STL" onClick={handleExportScene}><Download size={17} /><span>Экспорт STL</span></button>
-          <button className="icon-button theme-button" title="Переключить тему" onClick={toggleTheme}>{theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}</button>
+          <button className="icon-button" title="Сохранить проект" onClick={downloadProject}><Save size={17} /><span>Проект</span></button>
+          <button className="icon-button" title="Скачать STL" onClick={() => handleExport('stl')}><Download size={17} /><span>STL</span></button>
+          <button className="icon-button" title="Скачать 3MF" onClick={() => handleExport('3mf')}><Download size={17} /><span>3MF</span></button>
           <input ref={importRef} className="hidden-input" type="file" accept=".3dcc,.json,application/json" onChange={(event) => { void openProject(event.target.files?.[0]); event.target.value = ''; }} />
         </div>
       </header>
@@ -145,6 +148,12 @@ export default function App() {
         </aside>
 
         <section className="center-stage">
+          <div className="transform-toolbar" role="toolbar" aria-label="Инструменты трансформации">
+            <span className="toolbar-caption">ИНСТРУМЕНТ</span>
+            <button className={`tool-button ${transformMode === 'translate' ? 'active' : ''}`} onClick={() => setTransformMode('translate')} disabled={!selectedId} aria-pressed={transformMode === 'translate'}><Move size={15} /> Перемещение</button>
+            <button className={`tool-button ${transformMode === 'rotate' ? 'active' : ''}`} onClick={() => setTransformMode('rotate')} disabled={!selectedId} aria-pressed={transformMode === 'rotate'}><RotateCw size={15} /> Вращение</button>
+            <button className={`tool-button ${transformMode === 'scale' ? 'active' : ''}`} onClick={() => setTransformMode('scale')} disabled={!selectedId} aria-pressed={transformMode === 'scale'}><Scaling size={15} /> Масштаб</button>
+          </div>
           <Viewport />
           <footer className="statusbar"><span><i className="status-indicator" /> {saveStatus}</span><span>{objects.length} объектов</span><span>Единицы: мм</span></footer>
         </section>

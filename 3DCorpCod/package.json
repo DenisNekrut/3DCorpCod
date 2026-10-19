@@ -1,7 +1,7 @@
 {
   "name": "3dcorpcod",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,6 +15,7 @@
   "dependencies": {
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.3.0",
+    "fflate": "^0.8.2",
     "lucide-react": "^0.468.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -36,28 +37,13 @@
   "build": {
     "appId": "com.3dcorpcod.studio",
     "productName": "3DCorpCod",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "package.json"
-    ],
+    "directories": { "output": "release" },
+    "files": ["dist/**/*", "electron/**/*", "package.json"],
     "asar": true,
     "win": {
-      "target": [
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
+      "target": [{ "target": "portable", "arch": ["x64"] }],
       "artifactName": "3DCorpCod-Portable-${version}.${ext}"
     },
-    "portable": {
-      "artifactName": "3DCorpCod-Portable-${version}.${ext}"
-    }
+    "portable": { "artifactName": "3DCorpCod-Portable-${version}.${ext}" }
   }
 }

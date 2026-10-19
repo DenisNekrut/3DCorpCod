@@ -2,17 +2,19 @@ import { create } from 'zustand';
 import { createPrimitive } from './defaults';
 import type { ModelObject, PrimitiveType, ProjectDocument } from './types';
 
+export type TransformMode = 'translate' | 'rotate' | 'scale';
+
 interface EditorState {
   projectName: string;
   objects: ModelObject[];
   selectedId: string | null;
-  theme: 'dark' | 'light';
+  transformMode: TransformMode;
   addPrimitive: (type: PrimitiveType) => void;
   selectObject: (id: string | null) => void;
   updateObject: (id: string, patch: Partial<ModelObject>) => void;
+  setTransformMode: (mode: TransformMode) => void;
   deleteSelected: () => void;
   duplicateSelected: () => void;
-  toggleTheme: () => void;
   loadProject: (project: ProjectDocument) => void;
   getProject: () => ProjectDocument;
 }
@@ -21,7 +23,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   projectName: 'Безымянный проект',
   objects: [],
   selectedId: null,
-  theme: 'dark',
+  transformMode: 'translate',
   addPrimitive: (type) => set((state) => {
     const object = createPrimitive(type, state.objects.length);
     return { objects: [...state.objects, object], selectedId: object.id };
@@ -30,6 +32,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   updateObject: (id, patch) => set((state) => ({
     objects: state.objects.map((object) => object.id === id ? { ...object, ...patch } : object),
   })),
+  setTransformMode: (mode) => set({ transformMode: mode }),
   deleteSelected: () => set((state) => ({
     objects: state.objects.filter((object) => object.id !== state.selectedId),
     selectedId: null,
@@ -45,11 +48,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     };
     return { objects: [...state.objects, copy], selectedId: copy.id };
   }),
-  toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
   loadProject: (project) => set({
     projectName: project.name,
-    objects: project.objects,
+    objects: project.objects.map((object) => ({
+      ...object,
+      position: [...object.position] as [number, number, number],
+      rotation: [...object.rotation] as [number, number, number],
+      dimensions: [...object.dimensions] as [number, number, number],
+    })),
     selectedId: project.objects[0]?.id ?? null,
+    transformMode: 'translate',
   }),
   getProject: () => {
     const state = get();

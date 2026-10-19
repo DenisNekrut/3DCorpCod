@@ -1,13 +1,17 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { GizmoHelper, GizmoViewport, OrbitControls } from '@react-three/drei';
+import { GizmoHelper, GizmoViewport, OrbitControls, TransformControls } from '@react-three/drei';
+import { Euler, Mesh } from 'three';
 import { useEditorStore } from '../editor/store';
 import type { ModelObject } from '../editor/types';
 import { createObjectGeometry } from '../geometry/createObjectGeometry';
 
 function ModelMesh({ object }: { object: ModelObject }) {
   const selected = useEditorStore((state) => state.selectedId === object.id);
+  const transformMode = useEditorStore((state) => state.transformMode);
   const selectObject = useEditorStore((state) => state.selectObject);
+  const updateObject = useEditorStore((state) => state.updateObject);
+  const meshRef = useRef<Mesh>(null);
   const geometry = useMemo(() => createObjectGeometry(object), [
     object.type,
     object.dimensions[0],
@@ -20,8 +24,44 @@ function ModelMesh({ object }: { object: ModelObject }) {
 
   useEffect(() => () => geometry.dispose(), [geometry]);
 
-  return (
+  const commitTransform = () => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+
+    if (transformMode === 'scale') {
+      const scale = mesh.scale.clone();
+      const dimensions: [number, number, number] = [
+        Math.max(0.1, Math.round(object.dimensions[0] * scale.x * 10) / 10),
+        Math.max(0.1, Math.round(object.dimensions[1] * scale.y * 10) / 10),
+        Math.max(0.1, Math.round(object.dimensions[2] * scale.z * 10) / 10),
+      ];
+      mesh.scale.set(1, 1, 1);
+      updateObject(object.id, { dimensions });
+      return;
+    }
+
+    if (transformMode === 'translate') {
+      updateObject(object.id, {
+        position: [
+          Math.round(mesh.position.x * 10) / 10,
+          Math.round(mesh.position.y * 10) / 10,
+          Math.round(mesh.position.z * 10) / 10,
+        ],
+      });
+    } else {
+      updateObject(object.id, {
+        rotation: [
+          Math.round(mesh.rotation.x * 180 / Math.PI * 10) / 10,
+          Math.round(mesh.rotation.y * 180 / Math.PI * 10) / 10,
+          Math.round(mesh.rotation.z * 180 / Math.PI * 10) / 10,
+        ],
+      });
+    }
+  };
+
+  const mesh = (
     <mesh
+      ref={meshRef}
       geometry={geometry}
       position={object.position}
       rotation={object.rotation.map((angle) => angle * Math.PI / 180) as [number, number, number]}
@@ -39,6 +79,10 @@ function ModelMesh({ object }: { object: ModelObject }) {
       />
     </mesh>
   );
+
+  return selected
+    ? <TransformControls mode={transformMode} onMouseUp={commitTransform}>{mesh}</TransformControls>
+    : mesh;
 }
 
 function SceneContents() {
@@ -72,7 +116,7 @@ export default function Viewport() {
         <SceneContents />
       </Canvas>
       <div className="viewport-label">РАБОЧАЯ ОБЛАСТЬ · ММ</div>
-      <div className="viewport-help">ЛКМ — выбор · перетаскивание — вращение камеры · колесо — масштаб</div>
+      <div className="viewport-help">Выбери объект → перетаскивай стрелки для перемещения, дуги для вращения, квадраты для масштаба. ПКМ/пустое место — камера.</div>
     </div>
   );
 }
