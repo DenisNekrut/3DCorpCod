@@ -327,7 +327,7 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand-mark">3D</div>
-        <div className="brand-copy"><strong>3DCorpCod</strong><span>3D MODELING STUDIO</span></div>
+        <div className="brand-copy"><strong>3DCorpCod</strong><span>3D MODELING STUDIO · АВТОР НЕКРУТ ДЕНИС</span></div>
         <div className="top-divider" />
         <div className="project-title">{projectName}</div>
         <div className="top-actions">
