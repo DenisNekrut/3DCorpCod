@@ -39,6 +39,8 @@ export interface ModelObject {
   edgeSegments?: number;
   /** Optional logical group; objects remain independently editable. */
   groupId?: string;
+  /** User-defined layer name for scene organization. */
+  layer?: string;
   /** Boolean operation result; operands are retained parametrically in the same group. */
   booleanOperation?: 'union' | 'subtract' | 'intersect';
   booleanSource?: boolean;
