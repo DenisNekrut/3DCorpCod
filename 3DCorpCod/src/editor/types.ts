@@ -7,7 +7,8 @@ export type PrimitiveType =
   | 'capsule'
   | 'pyramid'
   | 'prism'
-  | 'text';
+  | 'text'
+  | 'mesh';
 
 export type EdgeTreatment = 'none' | 'round' | 'chamfer';
 
@@ -21,6 +22,8 @@ export interface ModelObject {
   visible: boolean;
   /** Display color for viewport and preview; STL remains monochrome. */
   color?: string;
+  /** Normalized, centered triangle mesh imported from STL; coordinates are scaled by dimensions. */
+  customGeometry?: { positions: number[] };
   /** Text-only settings used by extruded text objects. */
   textContent?: string;
   fontSize?: number;
