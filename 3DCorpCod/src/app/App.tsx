@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Box, Circle, Cylinder, Cone, Donut, Pill, Triangle, Hexagon, Copy, Download,
   FilePlus2, FolderOpen, Save, Trash2, Move, RotateCw, Scaling, LockKeyhole,
-  Unlock, CircleSlash, Eye, Lock,
+  Unlock, CircleSlash, Eye, Lock, Type,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEditorStore } from '../editor/store';
@@ -24,6 +24,7 @@ const primitiveButtons: { type: PrimitiveType; label: string; Icon: LucideIcon }
   { type: 'capsule', label: 'Капсула', Icon: Pill },
   { type: 'pyramid', label: 'Пирамида', Icon: Triangle },
   { type: 'prism', label: 'Призма', Icon: Hexagon },
+  { type: 'text', label: '3D-текст', Icon: Type },
 ];
 
 export default function App() {
@@ -167,7 +168,7 @@ export default function App() {
           <div className="object-list">
             {objects.map((object) => (
               <button key={object.id} className={`object-row ${selectedId === object.id ? 'selected' : ''}`} onClick={() => selectObject(object.id)}>
-                <span className={`object-dot ${object.hole ? 'hole-dot' : ''}`} />
+                <span className={`object-dot ${object.hole ? 'hole-dot' : ''}`} style={{ background: object.hole ? undefined : object.color ?? '#8295b2' }} />
                 <span className="object-name">{object.name}{object.hole ? ' · отверстие' : ''}</span>
                 {object.locked && <Lock size={13} className="row-lock" aria-label="Заблокирован" />}
               </button>
