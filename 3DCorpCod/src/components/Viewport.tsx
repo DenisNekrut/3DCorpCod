@@ -84,6 +84,16 @@ function ModelMesh({
     if (!evaluatedGeometry) geometry.dispose();
   }, [geometry, evaluatedGeometry]);
 
+  const syncTransform = () => {
+    const mesh = meshRef.current;
+    if (!mesh || object.locked || transformMode === 'scale') return;
+    if (transformMode === 'translate') {
+      updateObject(object.id, { position: [mesh.position.x, mesh.position.y, mesh.position.z] });
+    } else {
+      updateObject(object.id, { rotation: [mesh.rotation.x * 180 / Math.PI, mesh.rotation.y * 180 / Math.PI, mesh.rotation.z * 180 / Math.PI] });
+    }
+  };
+
   const commitTransform = () => {
     const mesh = meshRef.current;
     if (!mesh || object.locked) return;
@@ -134,7 +144,7 @@ function ModelMesh({
       }}
     >
       <meshStandardMaterial
-        color={object.hole ? '#f59e55' : selected ? '#62a8ff' : '#8295b2'}
+        color={object.hole ? '#f59e55' : object.color ?? '#8295b2'}
         roughness={0.55}
         metalness={0.12}
         transparent={Boolean(object.hole)}
@@ -146,7 +156,7 @@ function ModelMesh({
 
   const showDimensions = selected || hoveredId === object.id;
   const renderedMesh = selected && !object.locked
-    ? <TransformControls mode={transformMode} onMouseUp={commitTransform}>{mesh}</TransformControls>
+    ? <TransformControls mode={transformMode} onObjectChange={syncTransform} onMouseUp={commitTransform}>{mesh}</TransformControls>
     : mesh;
 
   return (
