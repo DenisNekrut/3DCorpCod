@@ -74,6 +74,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       dimensions: [...object.dimensions] as [number, number, number],
       locked: object.locked ?? false,
       hole: object.hole ?? false,
+      color: object.color ?? '#8295b2',
+      ...(object.type === 'text' ? { textContent: object.textContent ?? 'Текст', fontSize: object.fontSize ?? 10, textDepth: object.textDepth ?? object.dimensions[2], textBevel: object.textBevel ?? false, textBevelSize: object.textBevelSize ?? 0.3 } : {}),
     })),
     selectedId: project.objects[0]?.id ?? null,
     transformMode: 'translate',
