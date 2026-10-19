@@ -201,8 +201,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   }),
   ungroupSelected: () => set((state) => {
     const ids = new Set(state.selectedIds.length ? state.selectedIds : state.selectedId ? [state.selectedId] : []);
-    if (!state.objects.some((object) => ids.has(object.id) && object.groupId)) return state;
-    return { ...record(state), objects: state.objects.map((object) => ids.has(object.id) ? { ...object, groupId: undefined } : object) };
+    const selectedGroups = new Set(state.objects.filter((object) => ids.has(object.id) && object.groupId).map((object) => object.groupId!));
+    if (!selectedGroups.size) return state;
+    return {
+      ...record(state),
+      objects: state.objects.map((object) => ids.has(object.id) || (object.groupId && selectedGroups.has(object.groupId))
+        ? { ...object, groupId: undefined, booleanOperation: undefined, booleanSource: false }
+        : object),
+    };
   }),
   loadProject: (project) => set({
     projectName: project.name,
