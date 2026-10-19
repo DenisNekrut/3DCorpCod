@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Box, Circle, Cylinder, Cone, Donut, Pill, Triangle, Hexagon, Copy, Download,
   FilePlus2, FolderOpen, Save, Trash2, Move, RotateCw, Scaling, LockKeyhole,
-  UnlockKeyhole, CircleSlash, Eye, Lock,
+  Unlock, CircleSlash, Eye, Lock,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEditorStore } from '../editor/store';
@@ -194,7 +194,7 @@ export default function App() {
             <button className={`tool-button ${transformMode === 'rotate' ? 'active' : ''}`} onClick={() => setTransformMode('rotate')} disabled={!selectedId || selectedLocked} aria-pressed={transformMode === 'rotate'}><RotateCw size={15} /> Вращение</button>
             <button className={`tool-button ${transformMode === 'scale' ? 'active' : ''}`} onClick={() => setTransformMode('scale')} disabled={!selectedId || selectedLocked} aria-pressed={transformMode === 'scale'}><Scaling size={15} /> Масштаб</button>
             <button className={`tool-button ${selectedLocked ? 'active' : ''}`} onClick={toggleLockSelected} disabled={!selectedId} aria-pressed={selectedLocked} title={selectedLocked ? 'Разблокировать объект' : 'Заблокировать все изменения'}>
-              {selectedLocked ? <UnlockKeyhole size={15} /> : <LockKeyhole size={15} />}{selectedLocked ? 'Разблокировать' : 'Заблокировать'}
+              {selectedLocked ? <Unlock size={15} /> : <LockKeyhole size={15} />}{selectedLocked ? 'Разблокировать' : 'Заблокировать'}
             </button>
             <button className={`tool-button ${selectedObject?.hole ? 'active' : ''}`} onClick={toggleHoleSelected} disabled={!selectedId || selectedLocked} aria-pressed={Boolean(selectedObject?.hole)} title="Вычитать этот объект из пересекающихся тел">
               <CircleSlash size={15} />{selectedObject?.hole ? 'Режим отверстия' : 'Сделать отверстием'}
