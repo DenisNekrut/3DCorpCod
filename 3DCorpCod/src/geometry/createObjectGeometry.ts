@@ -52,7 +52,7 @@ function createExtrudedText(object: ModelObject, width: number, height: number, 
  * Shared geometry for the viewport and STL export.
  * Chamfer and round treatments are supported on boxes; text is real extruded geometry.
  */
-export function createObjectGeometry(object: ModelObject): BufferGeometry {
+function createRawObjectGeometry(object: ModelObject): BufferGeometry {
   const [rawWidth, rawHeight, rawDepth] = object.dimensions;
   const width = positive(rawWidth);
   const height = positive(rawHeight);
@@ -144,4 +144,32 @@ export function createObjectGeometry(object: ModelObject): BufferGeometry {
       throw new Error(`Unsupported primitive: ${exhaustive}`);
     }
   }
+}
+
+
+/** Applies optional axis reflection after creating the source solid. */
+export function createObjectGeometry(object: ModelObject): BufferGeometry {
+  const geometry = createRawObjectGeometry(object);
+  const mirror = object.mirror ?? [false, false, false];
+  if (!mirror.some(Boolean)) return geometry;
+  const signs: [number, number, number] = [mirror[0] ? -1 : 1, mirror[1] ? -1 : 1, mirror[2] ? -1 : 1];
+  geometry.scale(...signs);
+  // An odd number of reflections reverses triangle winding; flip it back so normals
+  // remain outward-facing for the viewport and mesh exporters.
+  if (mirror.filter(Boolean).length % 2 === 1) {
+    if (!geometry.getIndex()) {
+      const indices = Array.from({ length: geometry.getAttribute('position').count }, (_, index) => index);
+      for (let i = 0; i + 2 < indices.length; i += 3) [indices[i + 1], indices[i + 2]] = [indices[i + 2], indices[i + 1]];
+      geometry.setIndex(indices);
+    } else {
+      const index = geometry.getIndex()!;
+      const values = Array.from({ length: index.count }, (_, i) => index.getX(i));
+      for (let i = 0; i + 2 < values.length; i += 3) [values[i + 1], values[i + 2]] = [values[i + 2], values[i + 1]];
+      geometry.setIndex(values);
+    }
+    geometry.computeVertexNormals();
+  }
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
 }
