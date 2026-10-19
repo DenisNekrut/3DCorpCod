@@ -63,13 +63,7 @@ export default function App() {
   const importRef = useRef<HTMLInputElement>(null);
   const selectedObject = objects.find((object) => object.id === selectedId);
   const selectedLocked = Boolean(selectedObject?.locked);
-  const printWarnings = objects.flatMap((object) => {
-    if (!object.visible || object.hole || object.booleanSource) return [];
-    const warnings: string[] = [];
-    if (Math.min(...object.dimensions) < 0.8) warnings.push(`${object.name}: есть стенка или размер меньше 0,8 мм — проверь возможности принтера`);
-    if (object.position[1] - object.dimensions[1] / 2 < -0.05) warnings.push(`${object.name}: объект опускается ниже рабочей плоскости Y=0`);
-    return warnings;
-  });
+  const printWarnings = inspectPrintability(objects).map((warning) => `${warning.objectName}: ${warning.message}`);
 
   useEffect(() => {
     document.documentElement.dataset.theme = 'dark';
