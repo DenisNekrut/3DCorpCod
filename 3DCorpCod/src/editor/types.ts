@@ -37,6 +37,10 @@ export interface ModelObject {
   edgeSize?: number;
   /** Segment count used by rounded edges. */
   edgeSegments?: number;
+  /** Optional logical group; objects remain independently editable. */
+  groupId?: string;
+  /** Axis reflection flags, applied to geometry and exports. */
+  mirror?: [boolean, boolean, boolean];
 }
 
 export interface ProjectDocument {
