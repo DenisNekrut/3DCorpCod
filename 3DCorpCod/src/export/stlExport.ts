@@ -1,11 +1,11 @@
 import { Mesh, MeshStandardMaterial, Scene } from 'three';
 import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 import type { ModelObject } from '../editor/types';
-import { createObjectGeometry } from '../geometry/createObjectGeometry';
+import { createBooleanGeometry } from '../geometry/boolean/createBooleanGeometry';
 
 /**
- * Exports the visible objects as binary STL. STL does not store units; this editor uses mm.
- * The geometry factory is shared with the viewport so edge treatments are exported too.
+ * Exports visible solids as binary STL. Visible objects marked as holes are cutters,
+ * so they are evaluated into the intersecting solids and are never exported separately.
  */
 export function exportObjectsAsStl(objects: ModelObject[], fileName = '3dcorpcod-model.stl'): void {
   const scene = new Scene();
@@ -13,8 +13,8 @@ export function exportObjectsAsStl(objects: ModelObject[], fileName = '3dcorpcod
   const material = new MeshStandardMaterial({ color: '#b0b0b0' });
 
   for (const object of objects) {
-    if (!object.visible) continue;
-    const geometry = createObjectGeometry(object);
+    if (!object.visible || object.hole) continue;
+    const geometry = createBooleanGeometry(object, objects);
     geometries.push(geometry);
     const mesh = new Mesh(geometry, material);
     mesh.position.set(...object.position);
@@ -35,7 +35,7 @@ export function exportObjectsAsStl(objects: ModelObject[], fileName = '3dcorpcod
   anchor.href = url;
   anchor.download = fileName;
   anchor.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   geometries.forEach((geometry) => geometry.dispose());
   material.dispose();
 }
@@ -51,5 +51,5 @@ export function exportSceneAsStl(scene: Scene, fileName = '3dcorpcod-model.stl')
   anchor.href = url;
   anchor.download = fileName;
   anchor.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
