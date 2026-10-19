@@ -18,6 +18,10 @@ export interface ModelObject {
   rotation: [number, number, number];
   dimensions: [number, number, number];
   visible: boolean;
+  /** Locked objects remain selectable but cannot be edited or deleted. */
+  locked?: boolean;
+  /** Hole objects are boolean cutters and are not exported as visible solids. */
+  hole?: boolean;
   /** Edge processing is currently supported for boxes. Optional for old projects. */
   edgeTreatment?: EdgeTreatment;
   /** Edge radius/chamfer width in millimetres. */
