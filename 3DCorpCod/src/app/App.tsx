@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEditorStore } from '../editor/store';
+import { inspectPrintability } from '../editor/printability';
 import type { ModelObject, PrimitiveType, ProjectDocument } from '../editor/types';
 import { loadProject, saveProject } from '../storage/projectStorage';
 import { exportObjectsAsStl } from '../export/stlExport';
