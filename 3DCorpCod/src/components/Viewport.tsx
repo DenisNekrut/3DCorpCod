@@ -103,6 +103,7 @@ function ModelMesh({
   const controlsRef = useRef<TransformControlsImpl | null>(null);
   const commitTransformRef = useRef<() => void>(() => {});
   const draggingRef = useRef(false);
+  const shiftHeldRef = useRef(false);
   const geometry = useMemo(() => evaluatedGeometry ?? createObjectGeometry(object), [
     evaluatedGeometry,
     object.type,
@@ -118,12 +119,10 @@ function ModelMesh({
     if (!evaluatedGeometry) geometry.dispose();
   }, [geometry, evaluatedGeometry]);
 
-  const [shiftHeld, setShiftHeld] = useState(false);
-
   useEffect(() => {
-    const down = (event: KeyboardEvent) => { if (event.key === 'Shift') setShiftHeld(true); };
-    const up = (event: KeyboardEvent) => { if (event.key === 'Shift') setShiftHeld(false); };
-    const blur = () => setShiftHeld(false);
+    const down = (event: KeyboardEvent) => { if (event.key === 'Shift') shiftHeldRef.current = true; };
+    const up = (event: KeyboardEvent) => { if (event.key === 'Shift') shiftHeldRef.current = false; };
+    const blur = () => { shiftHeldRef.current = false; };
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
     window.addEventListener('blur', blur);
@@ -134,22 +133,40 @@ function ModelMesh({
     };
   }, []);
 
-  // Keep transforms transient while dragging. Updating Zustand on every pointer
-  // movement made React re-apply stale controlled props and snap the mesh back.
+  // Keep the scene and store synchronized while dragging; controlled mesh props
+  // otherwise re-apply stale coordinates and make the object jump back.
   const syncTransform = () => {
     const mesh = meshRef.current;
-    if (!mesh || object.locked || transformMode !== 'scale' || !shiftHeld) return;
-    const dimensions = object.dimensions;
-    const values = [mesh.scale.x, mesh.scale.y, mesh.scale.z];
-    values.forEach((scale, axis) => {
-      const base = dimensions[axis];
-      // Snap only axes currently being scaled; preserve pre-existing fractions.
-      if (Math.abs(scale - 1) < 0.0001) return;
-      const deltaMm = Math.round(base * scale - base);
-      const next = Math.max(0.1, base + deltaMm);
-      values[axis] = next / base;
-    });
-    mesh.scale.set(values[0], values[1], values[2]);
+    if (!mesh || object.locked) return;
+    if (transformMode === 'translate') {
+      const position: [number, number, number] = [
+        Math.round(mesh.position.x * 10) / 10,
+        Math.round(mesh.position.y * 10) / 10,
+        Math.round(mesh.position.z * 10) / 10,
+      ];
+      updateObject(object.id, { position });
+      return;
+    }
+    if (transformMode === 'rotate') {
+      updateObject(object.id, {
+        rotation: [
+          Math.round(mesh.rotation.x * 180 / Math.PI * 10) / 10,
+          Math.round(mesh.rotation.y * 180 / Math.PI * 10) / 10,
+          Math.round(mesh.rotation.z * 180 / Math.PI * 10) / 10,
+        ],
+      });
+      return;
+    }
+    if (transformMode === 'scale' && shiftHeldRef.current) {
+      const dimensions = object.dimensions;
+      const values = [mesh.scale.x, mesh.scale.y, mesh.scale.z];
+      values.forEach((scale, axis) => {
+        const base = dimensions[axis];
+        if (Math.abs(scale - 1) < 0.0001) return;
+        values[axis] = Math.max(0.1, base + Math.round(base * scale - base)) / base;
+      });
+      mesh.scale.set(values[0], values[1], values[2]);
+    }
   };
 
   const commitTransform = () => {
@@ -250,7 +267,7 @@ function ModelMesh({
 
   const showDimensions = selected || hoveredId === object.id;
   const renderedMesh = selected && !object.locked
-    ? <TransformControls ref={controlsRef} mode={transformMode} translationSnap={gridSnap ? 1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform}>{mesh}</TransformControls>
+    ? <TransformControls ref={controlsRef} mode={transformMode} translationSnap={gridSnap ? 0.1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform}>{mesh}</TransformControls>
     : mesh;
 
   return (
