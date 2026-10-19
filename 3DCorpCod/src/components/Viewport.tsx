@@ -87,7 +87,6 @@ function ModelMesh({ object }: { object: ModelObject }) {
 
 function SceneContents() {
   const objects = useEditorStore((state) => state.objects);
-  const selectObject = useEditorStore((state) => state.selectObject);
 
   return (
     <>
@@ -101,22 +100,20 @@ function SceneContents() {
       <GizmoHelper alignment="bottom-right" margin={[70, 70]}>
         <GizmoViewport />
       </GizmoHelper>
-      <mesh visible={false} onClick={() => selectObject(null)}>
-        <sphereGeometry args={[0.001]} />
-        <meshBasicMaterial />
-      </mesh>
     </>
   );
 }
 
 export default function Viewport() {
+  const selectObject = useEditorStore((state) => state.selectObject);
+
   return (
     <div className="viewport">
-      <Canvas camera={{ position: [70, 65, 80], fov: 45 }} dpr={[1, 2]}>
+      <Canvas camera={{ position: [70, 65, 80], fov: 45 }} dpr={[1, 2]} onPointerMissed={() => selectObject(null)}>
         <SceneContents />
       </Canvas>
       <div className="viewport-label">РАБОЧАЯ ОБЛАСТЬ · ММ</div>
-      <div className="viewport-help">Выбери объект → перетаскивай стрелки для перемещения, дуги для вращения, квадраты для масштаба. ПКМ/пустое место — камера.</div>
+      <div className="viewport-help">Выбери объект → стрелки: перемещение, дуги: вращение, квадраты: масштаб. Ctrl+S — сохранить, Ctrl+O — открыть, Ctrl+D — дублировать, Delete — удалить. Пустой щелчок снимает выделение.</div>
     </div>
   );
 }
