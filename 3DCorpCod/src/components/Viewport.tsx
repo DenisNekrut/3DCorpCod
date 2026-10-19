@@ -167,11 +167,15 @@ function ModelMesh({
   useEffect(() => {
     const controls = controlsRef.current;
     if (!controls) return;
+    const eventTarget = controls as unknown as {
+      addEventListener: (type: string, listener: (event: { value: boolean }) => void) => void;
+      removeEventListener: (type: string, listener: (event: { value: boolean }) => void) => void;
+    };
     const handleDraggingChanged = (event: { value: boolean }) => {
       if (!event.value) commitTransformRef.current();
     };
-    controls.addEventListener('dragging-changed', handleDraggingChanged);
-    return () => controls.removeEventListener('dragging-changed', handleDraggingChanged);
+    eventTarget.addEventListener('dragging-changed', handleDraggingChanged);
+    return () => eventTarget.removeEventListener('dragging-changed', handleDraggingChanged);
   }, [selected]);
 
   const mesh = (
