@@ -10,6 +10,7 @@ const dimensionsByType: Record<PrimitiveType, [number, number, number]> = {
   pyramid: [20, 20, 20],
   prism: [20, 20, 20],
   text: [30, 10, 2],
+  mesh: [20, 20, 20],
 };
 
 const names: Record<PrimitiveType, string> = {
@@ -22,6 +23,7 @@ const names: Record<PrimitiveType, string> = {
   pyramid: 'Пирамида',
   prism: 'Треугольная призма',
   text: 'Текст',
+  mesh: 'Импортированная сетка',
 };
 
 export function createPrimitive(type: PrimitiveType, index: number): ModelObject {
