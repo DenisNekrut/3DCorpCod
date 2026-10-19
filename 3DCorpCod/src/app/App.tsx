@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Circle, Cylinder, Cone, Donut, Pill, Triangle, Hexagon, Copy, Download, FilePlus2, FolderOpen, Save, Trash2, Move, RotateCw, Scaling } from 'lucide-react';
+import {
+  Box, Circle, Cylinder, Cone, Donut, Pill, Triangle, Hexagon, Copy, Download,
+  FilePlus2, FolderOpen, Save, Trash2, Move, RotateCw, Scaling, LockKeyhole,
+  UnlockKeyhole, CircleSlash, Eye, Lock,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEditorStore } from '../editor/store';
 import type { PrimitiveType, ProjectDocument } from '../editor/types';
@@ -8,6 +12,7 @@ import { exportObjectsAsStl } from '../export/stlExport';
 import { exportObjectsAs3mf } from '../export/threeMfExport';
 import Viewport from '../components/Viewport';
 import PropertiesPanel from '../components/PropertiesPanel';
+import PreviewWindow from '../components/PreviewWindow';
 import '../styles/app.css';
 
 const primitiveButtons: { type: PrimitiveType; label: string; Icon: LucideIcon }[] = [
@@ -31,10 +36,15 @@ export default function App() {
   const deleteSelected = useEditorStore((state) => state.deleteSelected);
   const duplicateSelected = useEditorStore((state) => state.duplicateSelected);
   const setTransformMode = useEditorStore((state) => state.setTransformMode);
+  const toggleLockSelected = useEditorStore((state) => state.toggleLockSelected);
+  const toggleHoleSelected = useEditorStore((state) => state.toggleHoleSelected);
   const getProject = useEditorStore((state) => state.getProject);
   const loadProjectIntoStore = useEditorStore((state) => state.loadProject);
   const [saveStatus, setSaveStatus] = useState('Локальный проект');
+  const [previewOpen, setPreviewOpen] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
+  const selectedObject = objects.find((object) => object.id === selectedId);
+  const selectedLocked = Boolean(selectedObject?.locked);
 
   useEffect(() => {
     document.documentElement.dataset.theme = 'dark';
@@ -85,8 +95,8 @@ export default function App() {
   const safeName = projectName.trim().replace(/[^a-z0-9а-яё_-]+/gi, '-').replace(/^-+|-+$/g, '') || '3dcorpcod-model';
 
   const handleExport = (format: 'stl' | '3mf') => {
-    if (!objects.some((object) => object.visible)) {
-      setSaveStatus('Нет видимых объектов для экспорта');
+    if (!objects.some((object) => object.visible && !object.hole)) {
+      setSaveStatus('Нет видимых тел для экспорта');
       return;
     }
     try {
@@ -95,7 +105,7 @@ export default function App() {
       setSaveStatus(`Экспорт ${format.toUpperCase()} выполнен`);
     } catch (error) {
       console.error(`Export ${format} failed`, error);
-      setSaveStatus(`Ошибка экспорта ${format.toUpperCase()}`);
+      setSaveStatus(error instanceof Error ? error.message : `Ошибка экспорта ${format.toUpperCase()}`);
     }
   };
 
@@ -117,12 +127,14 @@ export default function App() {
       } else if ((event.key === 'Delete' || event.key === 'Backspace') && selectedId) {
         event.preventDefault();
         deleteSelected();
+      } else if (event.key === 'Escape' && previewOpen) {
+        setPreviewOpen(false);
       }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [deleteSelected, downloadProject, duplicateSelected, selectedId]);
+  }, [deleteSelected, downloadProject, duplicateSelected, selectedId, previewOpen]);
 
   return (
     <main className="app-shell">
@@ -134,6 +146,7 @@ export default function App() {
         <div className="top-actions">
           <button className="icon-button" title="Открыть проект" onClick={() => importRef.current?.click()}><FolderOpen size={17} /><span>Открыть</span></button>
           <button className="icon-button" title="Сохранить проект" onClick={downloadProject}><Save size={17} /><span>Проект</span></button>
+          <button className="icon-button" title="Предпросмотр готовой модели" onClick={() => setPreviewOpen(true)}><Eye size={17} /><span>Предпросмотр</span></button>
           <button className="icon-button" title="Скачать STL" onClick={() => handleExport('stl')}><Download size={17} /><span>STL</span></button>
           <button className="icon-button" title="Скачать 3MF" onClick={() => handleExport('3mf')}><Download size={17} /><span>3MF</span></button>
           <input ref={importRef} className="hidden-input" type="file" accept=".3dcc,.json,application/json" onChange={(event) => { void openProject(event.target.files?.[0]); event.target.value = ''; }} />
@@ -154,14 +167,16 @@ export default function App() {
           <div className="object-list">
             {objects.map((object) => (
               <button key={object.id} className={`object-row ${selectedId === object.id ? 'selected' : ''}`} onClick={() => selectObject(object.id)}>
-                <span className="object-dot" /><span className="object-name">{object.name}</span>
+                <span className={`object-dot ${object.hole ? 'hole-dot' : ''}`} />
+                <span className="object-name">{object.name}{object.hole ? ' · отверстие' : ''}</span>
+                {object.locked && <Lock size={13} className="row-lock" aria-label="Заблокирован" />}
               </button>
             ))}
             {objects.length === 0 && <p className="muted empty-hint">Сцена пуста. Добавь фигуру, чтобы начать.</p>}
           </div>
           <div className="object-actions">
-            <button className="small-action" disabled={!selectedId} onClick={duplicateSelected}><Copy size={15} /> Дублировать</button>
-            <button className="small-action danger-action" disabled={!selectedId} onClick={deleteSelected}><Trash2 size={15} /> Удалить</button>
+            <button className="small-action" disabled={!selectedId || selectedLocked} onClick={duplicateSelected}><Copy size={15} /> Дублировать</button>
+            <button className="small-action danger-action" disabled={!selectedId || selectedLocked} onClick={deleteSelected}><Trash2 size={15} /> Удалить</button>
           </div>
           <div className="leftbar-bottom">
             <button className="new-project-button" onClick={() => {
@@ -175,9 +190,16 @@ export default function App() {
         <section className="center-stage">
           <div className="transform-toolbar" role="toolbar" aria-label="Инструменты трансформации">
             <span className="toolbar-caption">ИНСТРУМЕНТ</span>
-            <button className={`tool-button ${transformMode === 'translate' ? 'active' : ''}`} onClick={() => setTransformMode('translate')} disabled={!selectedId} aria-pressed={transformMode === 'translate'}><Move size={15} /> Перемещение</button>
-            <button className={`tool-button ${transformMode === 'rotate' ? 'active' : ''}`} onClick={() => setTransformMode('rotate')} disabled={!selectedId} aria-pressed={transformMode === 'rotate'}><RotateCw size={15} /> Вращение</button>
-            <button className={`tool-button ${transformMode === 'scale' ? 'active' : ''}`} onClick={() => setTransformMode('scale')} disabled={!selectedId} aria-pressed={transformMode === 'scale'}><Scaling size={15} /> Масштаб</button>
+            <button className={`tool-button ${transformMode === 'translate' ? 'active' : ''}`} onClick={() => setTransformMode('translate')} disabled={!selectedId || selectedLocked} aria-pressed={transformMode === 'translate'}><Move size={15} /> Перемещение</button>
+            <button className={`tool-button ${transformMode === 'rotate' ? 'active' : ''}`} onClick={() => setTransformMode('rotate')} disabled={!selectedId || selectedLocked} aria-pressed={transformMode === 'rotate'}><RotateCw size={15} /> Вращение</button>
+            <button className={`tool-button ${transformMode === 'scale' ? 'active' : ''}`} onClick={() => setTransformMode('scale')} disabled={!selectedId || selectedLocked} aria-pressed={transformMode === 'scale'}><Scaling size={15} /> Масштаб</button>
+            <button className={`tool-button ${selectedLocked ? 'active' : ''}`} onClick={toggleLockSelected} disabled={!selectedId} aria-pressed={selectedLocked} title={selectedLocked ? 'Разблокировать объект' : 'Заблокировать все изменения'}>
+              {selectedLocked ? <UnlockKeyhole size={15} /> : <LockKeyhole size={15} />}{selectedLocked ? 'Разблокировать' : 'Заблокировать'}
+            </button>
+            <button className={`tool-button ${selectedObject?.hole ? 'active' : ''}`} onClick={toggleHoleSelected} disabled={!selectedId || selectedLocked} aria-pressed={Boolean(selectedObject?.hole)} title="Вычитать этот объект из пересекающихся тел">
+              <CircleSlash size={15} />{selectedObject?.hole ? 'Режим отверстия' : 'Сделать отверстием'}
+            </button>
+            <button className="tool-button" onClick={() => setPreviewOpen(true)}><Eye size={15} /> Предпросмотр</button>
           </div>
           <Viewport />
           <footer className="statusbar"><span><i className="status-indicator" /> {saveStatus}</span><span>{objects.length} объектов</span><span>Единицы: мм</span></footer>
@@ -185,6 +207,7 @@ export default function App() {
 
         <PropertiesPanel />
       </div>
+      {previewOpen && <PreviewWindow objects={objects} onClose={() => setPreviewOpen(false)} />}
     </main>
   );
 }
