@@ -99,6 +99,31 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName ?? '')) return;
+
+      const command = event.ctrlKey || event.metaKey;
+      if (command && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        downloadProject();
+      } else if (command && event.key.toLowerCase() === 'o') {
+        event.preventDefault();
+        importRef.current?.click();
+      } else if (command && event.key.toLowerCase() === 'd' && selectedId) {
+        event.preventDefault();
+        duplicateSelected();
+      } else if ((event.key === 'Delete' || event.key === 'Backspace') && selectedId) {
+        event.preventDefault();
+        deleteSelected();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [deleteSelected, downloadProject, duplicateSelected, selectedId]);
+
   return (
     <main className="app-shell">
       <header className="topbar">
