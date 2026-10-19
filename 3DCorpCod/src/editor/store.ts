@@ -34,8 +34,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   updateObject: (id, patch) => set((state) => ({
     objects: state.objects.map((object) => {
       if (object.id !== id) return object;
-      // Lock state itself may always be changed; all other changes are blocked.
-      if (object.locked && Object.keys(patch).some((key) => key !== 'locked')) return object;
+      const isOnlyLockChange = Object.keys(patch).length === 1 && Object.prototype.hasOwnProperty.call(patch, 'locked');
+      if (object.locked && !isOnlyLockChange) return object;
       return { ...object, ...patch };
     }),
   })),
