@@ -13,7 +13,7 @@ export function exportObjectsAsStl(objects: ModelObject[], fileName = '3dcorpcod
   const material = new MeshStandardMaterial({ color: '#b0b0b0' });
 
   for (const object of objects) {
-    if (!object.visible || object.hole) continue;
+    if (!object.visible || object.hole || object.booleanSource) continue;
     const geometry = createBooleanGeometry(object, objects);
     geometries.push(geometry);
     const mesh = new Mesh(geometry, material);
