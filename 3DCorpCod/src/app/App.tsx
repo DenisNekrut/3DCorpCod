@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Box, Circle, Cylinder, Cone, Donut, Pill, Triangle, Hexagon, Copy, Download,
   FilePlus2, FolderOpen, Save, Trash2, Move, RotateCw, Scaling, LockKeyhole,
-  Unlock, CircleSlash, Eye, Lock, Type,
+  Unlock, CircleSlash, Eye, Lock, Type, Undo2, Redo2, Magnet, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, FlipHorizontal, Group, Ungroup,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEditorStore } from '../editor/store';
@@ -39,6 +39,18 @@ export default function App() {
   const setTransformMode = useEditorStore((state) => state.setTransformMode);
   const toggleLockSelected = useEditorStore((state) => state.toggleLockSelected);
   const toggleHoleSelected = useEditorStore((state) => state.toggleHoleSelected);
+  const undo = useEditorStore((state) => state.undo);
+  const redo = useEditorStore((state) => state.redo);
+  const undoStack = useEditorStore((state) => state.undoStack);
+  const redoStack = useEditorStore((state) => state.redoStack);
+  const selectedIds = useEditorStore((state) => state.selectedIds);
+  const gridSnap = useEditorStore((state) => state.gridSnap);
+  const toggleGridSnap = useEditorStore((state) => state.toggleGridSnap);
+  const alignSelected = useEditorStore((state) => state.alignSelected);
+  const mirrorSelected = useEditorStore((state) => state.mirrorSelected);
+  const groupSelected = useEditorStore((state) => state.groupSelected);
+  const ungroupSelected = useEditorStore((state) => state.ungroupSelected);
+  const toggleSelectObject = useEditorStore((state) => state.toggleSelectObject);
   const getProject = useEditorStore((state) => state.getProject);
   const loadProjectIntoStore = useEditorStore((state) => state.loadProject);
   const [saveStatus, setSaveStatus] = useState('Локальный проект');
@@ -122,6 +134,10 @@ export default function App() {
       } else if (command && event.key.toLowerCase() === 'o') {
         event.preventDefault();
         importRef.current?.click();
+      } else if (command && event.key.toLowerCase() === 'z' && !event.shiftKey) {
+        event.preventDefault(); undo();
+      } else if (command && (event.key.toLowerCase() === 'y' || (event.key.toLowerCase() === 'z' && event.shiftKey))) {
+        event.preventDefault(); redo();
       } else if (command && event.key.toLowerCase() === 'd' && selectedId) {
         event.preventDefault();
         duplicateSelected();
@@ -135,7 +151,7 @@ export default function App() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [deleteSelected, downloadProject, duplicateSelected, selectedId, previewOpen]);
+  }, [deleteSelected, downloadProject, duplicateSelected, selectedId, previewOpen, undo, redo]);
 
   return (
     <main className="app-shell">
@@ -145,6 +161,8 @@ export default function App() {
         <div className="top-divider" />
         <div className="project-title">{projectName}</div>
         <div className="top-actions">
+          <button className="icon-button" title="Отменить (Ctrl+Z)" onClick={undo} disabled={!undoStack.length}><Undo2 size={17} /><span>Отменить</span></button>
+          <button className="icon-button" title="Повторить (Ctrl+Y)" onClick={redo} disabled={!redoStack.length}><Redo2 size={17} /><span>Повторить</span></button>
           <button className="icon-button" title="Открыть проект" onClick={() => importRef.current?.click()}><FolderOpen size={17} /><span>Открыть</span></button>
           <button className="icon-button" title="Сохранить проект" onClick={downloadProject}><Save size={17} /><span>Проект</span></button>
           <button className="icon-button" title="Предпросмотр готовой модели" onClick={() => setPreviewOpen(true)}><Eye size={17} /><span>Предпросмотр</span></button>
@@ -167,7 +185,7 @@ export default function App() {
           <div className="panel-heading object-heading">Объекты сцены <span className="count">{objects.length}</span></div>
           <div className="object-list">
             {objects.map((object) => (
-              <button key={object.id} className={`object-row ${selectedId === object.id ? 'selected' : ''}`} onClick={() => selectObject(object.id)}>
+              <button key={object.id} className={`object-row ${selectedId === object.id ? 'selected' : ''}`} onClick={(event) => event.shiftKey ? toggleSelectObject(object.id) : selectObject(object.id)} title={object.groupId ? 'Группа объектов' : undefined}>
                 <span className={`object-dot ${object.hole ? 'hole-dot' : ''}`} style={{ background: object.hole ? undefined : object.color ?? '#8295b2' }} />
                 <span className="object-name">{object.name}{object.hole ? ' · отверстие' : ''}</span>
                 {object.locked && <Lock size={13} className="row-lock" aria-label="Заблокирован" />}
@@ -177,6 +195,8 @@ export default function App() {
           </div>
           <div className="object-actions">
             <button className="small-action" disabled={!selectedId || selectedLocked} onClick={duplicateSelected}><Copy size={15} /> Дублировать</button>
+            <button className="small-action" disabled={selectedIds.length < 2} onClick={groupSelected}><Group size={15} /> Группа</button>
+            <button className="small-action" disabled={!selectedIds.length || !objects.some((object) => selectedIds.includes(object.id) && object.groupId)} onClick={ungroupSelected}><Ungroup size={15} /> Разгрупп.</button>
             <button className="small-action danger-action" disabled={!selectedId || selectedLocked} onClick={deleteSelected}><Trash2 size={15} /> Удалить</button>
           </div>
           <div className="leftbar-bottom">
@@ -200,6 +220,11 @@ export default function App() {
             <button className={`tool-button ${selectedObject?.hole ? 'active' : ''}`} onClick={toggleHoleSelected} disabled={!selectedId || selectedLocked} aria-pressed={Boolean(selectedObject?.hole)} title="Вычитать этот объект из пересекающихся тел">
               <CircleSlash size={15} />{selectedObject?.hole ? 'Режим отверстия' : 'Сделать отверстием'}
             </button>
+            <button className={`tool-button ${gridSnap ? 'active' : ''}`} onClick={toggleGridSnap} aria-pressed={gridSnap} title="Шаг привязки 1 мм"><Magnet size={15} /> Привязка {gridSnap ? 'вкл.' : 'выкл.'}</button>
+            <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'min')} title="Выровнять по краю X"><AlignStartHorizontal size={15} /> X min</button>
+            <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'center')} title="Выровнять по центру X"><AlignCenterHorizontal size={15} /> X центр</button>
+            <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'max')} title="Выровнять по краю X"><AlignEndHorizontal size={15} /> X max</button>
+            <button className="tool-button" disabled={!selectedIds.length} onClick={() => mirrorSelected(0)} title="Отразить относительно центра выбора по X"><FlipHorizontal size={15} /> Отразить X</button>
             <button className="tool-button" onClick={() => setPreviewOpen(true)}><Eye size={15} /> Предпросмотр</button>
           </div>
           <Viewport />
