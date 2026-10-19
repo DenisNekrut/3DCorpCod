@@ -188,6 +188,21 @@ function ModelMesh({
 
   commitTransformRef.current = commitTransform;
 
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    const eventTarget = controls as unknown as {
+      addEventListener: (type: string, listener: (event: { value?: boolean }) => void) => void;
+      removeEventListener: (type: string, listener: (event: { value?: boolean }) => void) => void;
+    };
+    const handleDraggingChanged = (event: { value?: boolean }) => {
+      // Commit before the viewport's missed-click handler can clear selection.
+      if (event.value === false) commitTransformRef.current();
+    };
+    eventTarget.addEventListener('dragging-changed', handleDraggingChanged);
+    return () => eventTarget.removeEventListener('dragging-changed', handleDraggingChanged);
+  }, [selected, transformMode]);
+
   const mesh = (
     <mesh
       ref={meshRef}
@@ -215,7 +230,7 @@ function ModelMesh({
 
   const showDimensions = selected || hoveredId === object.id;
   const renderedMesh = selected && !object.locked
-    ? <TransformControls ref={controlsRef} mode={transformMode} translationSnap={gridSnap ? 1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform} onMouseUp={() => commitTransformRef.current()}>{mesh}</TransformControls>
+    ? <TransformControls ref={controlsRef} mode={transformMode} translationSnap={gridSnap ? 1 : null} rotationSnap={gridSnap ? Math.PI / 12 : null} onObjectChange={syncTransform}>{mesh}</TransformControls>
     : mesh;
 
   return (
