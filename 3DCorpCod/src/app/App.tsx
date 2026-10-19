@@ -5,6 +5,7 @@ import {
   Unlock, CircleSlash, Eye, Lock, Type, Undo2, Redo2, Magnet, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, FlipHorizontal, Group, Ungroup, Github, Plus, ArrowRight, CloudUpload,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { useEditorStore } from '../editor/store';
 import { inspectPrintability } from '../editor/printability';
 import type { ModelObject, PrimitiveType, ProjectDocument } from '../editor/types';
@@ -165,6 +166,55 @@ export default function App() {
   const openProject = async (file?: File) => {
     if (!file) return;
     try {
+      if (file.name.toLowerCase().endsWith('.stl')) {
+        const loader = new STLLoader();
+        const geometry = loader.parse(await file.arrayBuffer());
+        geometry.computeBoundingBox();
+        const bounds = geometry.boundingBox;
+        const attribute = geometry.getAttribute('position');
+        if (!bounds || attribute.count < 3 || attribute.count % 3 !== 0) {
+          geometry.dispose();
+          throw new Error('STL does not contain valid triangles');
+        }
+        const size = bounds.getSize(new (await import('three')).Vector3());
+        const dimensions: [number, number, number] = [
+          Math.max(0.1, size.x), Math.max(0.1, size.y), Math.max(0.1, size.z),
+        ];
+        const center = bounds.getCenter(new (await import('three')).Vector3());
+        geometry.translate(-center.x, -center.y, -center.z);
+        const positions: number[] = [];
+        const centered = geometry.getAttribute('position');
+        for (let index = 0; index < centered.count; index++) {
+          positions.push(
+            centered.getX(index) / dimensions[0],
+            centered.getY(index) / dimensions[1],
+            centered.getZ(index) / dimensions[2],
+          );
+        }
+        geometry.dispose();
+        const imported: ModelObject = {
+          id: crypto.randomUUID(),
+          name: file.name.replace(/\.stl$/i, '') || 'Импортированная модель',
+          type: 'mesh',
+          position: [0, dimensions[1] / 2, 0],
+          rotation: [0, 0, 0],
+          dimensions,
+          customGeometry: { positions },
+          visible: true,
+          color: '#8295b2',
+          layer: 'Импорт',
+        };
+        loadProjectIntoStore({
+          schemaVersion: 1,
+          name: file.name.replace(/\.stl$/i, '') || 'Импортированная модель',
+          units: 'mm',
+          objects: [imported],
+          updatedAt: new Date().toISOString(),
+        });
+        setScreen('editor');
+        setSaveStatus('STL импортирован; проверь масштаб и единицы исходной модели');
+        return;
+      }
       const project = JSON.parse(await file.text()) as ProjectDocument;
       if (project.schemaVersion !== 1 || project.units !== 'mm' || !Array.isArray(project.objects)) {
         throw new Error('Unsupported project schema');
@@ -173,7 +223,7 @@ export default function App() {
       setScreen('editor');
       setSaveStatus('Проект открыт');
     } catch {
-      setSaveStatus('Не удалось открыть файл проекта');
+      setSaveStatus('Не удалось открыть проект или STL-файл');
     }
   };
 
@@ -303,7 +353,7 @@ export default function App() {
             <button className="home-secondary" onClick={() => importRef.current?.click()}><FolderOpen size={17} /> Открыть файл</button>
             <button className="home-secondary" onClick={() => setScreen('editor')}><ArrowRight size={17} /> Продолжить работу</button>
           </div>
-          <input ref={importRef} className="hidden-input" type="file" accept=".3dcc,.json,application/json" onChange={(event) => { void openProject(event.target.files?.[0]); event.target.value = ''; }} />
+          <input ref={importRef} className="hidden-input" type="file" accept=".3dcc,.json,.stl,application/json,model/stl" onChange={(event) => { void openProject(event.target.files?.[0]); event.target.value = ''; }} />
         </section>
         <section className="home-projects">
           <div className="home-section-title"><div><span>ТВОЯ КОЛЛЕКЦИЯ</span><h2>Недавние проекты</h2></div><span className="home-project-count">{recentProjects.length} / 8</span></div>
