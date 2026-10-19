@@ -122,6 +122,25 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     }));
     return { ...record(state), objects: [...state.objects, ...copies], selectedId: copies[copies.length - 1].id, selectedIds: copies.map((item) => item.id) };
   }),
+  copySelected: () => set((state) => {
+    const ids = new Set(state.selectedIds.length ? state.selectedIds : state.selectedId ? [state.selectedId] : []);
+    const clipboard = cloneObjects(state.objects.filter((object) => ids.has(object.id)));
+    return clipboard.length ? { clipboard } : state;
+  }),
+  pasteCopied: () => set((state) => {
+    if (!state.clipboard.length) return state;
+    const copies = state.clipboard.map((source) => ({
+      ...source,
+      id: crypto.randomUUID(),
+      name: `${source.name} — копия`,
+      locked: false,
+      booleanSource: false,
+      booleanOperation: undefined,
+      groupId: undefined,
+      position: [source.position[0] + 10, source.position[1], source.position[2] + 10] as [number, number, number],
+    }));
+    return { ...record(state), objects: [...state.objects, ...copies], selectedId: copies[copies.length - 1].id, selectedIds: copies.map((object) => object.id) };
+  }),
   toggleLockSelected: () => set((state) => {
     const ids = new Set(state.selectedIds.length ? state.selectedIds : state.selectedId ? [state.selectedId] : []);
     if (!ids.size) return state;
