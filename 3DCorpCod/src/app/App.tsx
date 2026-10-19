@@ -172,6 +172,14 @@ export default function App() {
       } else if ((event.key === 'Delete' || event.key === 'Backspace') && selectedId) {
         event.preventDefault();
         deleteSelected();
+      } else if (event.key === '1') {
+        setTransformMode('translate');
+      } else if (event.key === '2') {
+        setTransformMode('rotate');
+      } else if (event.key === '3') {
+        setTransformMode('scale');
+      } else if (event.key.toLowerCase() === 'g' && !command) {
+        toggleGridSnap();
       } else if (event.key === 'Escape' && previewOpen) {
         setPreviewOpen(false);
       }
@@ -179,7 +187,7 @@ export default function App() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [deleteSelected, downloadProject, duplicateSelected, selectedId, previewOpen, undo, redo]);
+  }, [deleteSelected, downloadProject, duplicateSelected, selectedId, previewOpen, undo, redo, setTransformMode, toggleGridSnap]);
 
   return (
     <main className="app-shell">
@@ -259,8 +267,12 @@ export default function App() {
             <button className={`tool-button ${gridSnap ? 'active' : ''}`} onClick={toggleGridSnap} aria-pressed={gridSnap} title="Шаг привязки 1 мм"><Magnet size={15} /> Привязка {gridSnap ? 'вкл.' : 'выкл.'}</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'min')} title="Выровнять по краю X"><AlignStartHorizontal size={15} /> X min</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'center')} title="Выровнять по центру X"><AlignCenterHorizontal size={15} /> X центр</button>
+            <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(1, 'center')} title="Выровнять по центру Y"><AlignCenterHorizontal size={15} /> Y центр</button>
+            <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(2, 'center')} title="Выровнять по центру Z"><AlignCenterHorizontal size={15} /> Z центр</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'max')} title="Выровнять по краю X"><AlignEndHorizontal size={15} /> X max</button>
             <button className="tool-button" disabled={!selectedIds.length} onClick={() => mirrorSelected(0)} title="Отразить относительно центра выбора по X"><FlipHorizontal size={15} /> Отразить X</button>
+            <button className="tool-button" disabled={!selectedIds.length} onClick={() => mirrorSelected(1)} title="Отразить относительно центра выбора по Y"><FlipHorizontal size={15} /> Отразить Y</button>
+            <button className="tool-button" disabled={!selectedIds.length} onClick={() => mirrorSelected(2)} title="Отразить относительно центра выбора по Z"><FlipHorizontal size={15} /> Отразить Z</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => booleanSelected('union')} title="Объединить выбранные тела"><span aria-hidden="true">∪</span> Объединить</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => booleanSelected('subtract')} title="Вычесть остальные выбранные тела из активного"><span aria-hidden="true">−</span> Вычесть</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => booleanSelected('intersect')} title="Оставить только общую часть выбранных тел"><span aria-hidden="true">∩</span> Пересечение</button>
