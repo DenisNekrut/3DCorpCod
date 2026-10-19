@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
 import type { BufferGeometry } from 'three';
-import { useEditorStore } from '../editor/store';
 import type { ModelObject } from '../editor/types';
 import { createObjectGeometry } from '../geometry/createObjectGeometry';
 import { createBooleanGeometry } from '../geometry/boolean/createBooleanGeometry';
