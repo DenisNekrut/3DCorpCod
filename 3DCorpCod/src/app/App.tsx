@@ -58,6 +58,7 @@ export default function App() {
   const [saveStatus, setSaveStatus] = useState('Локальный проект');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [customPresets, setCustomPresets] = useState<ModelObject[]>([]);
+  const [libraryLoaded, setLibraryLoaded] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
   const selectedObject = objects.find((object) => object.id === selectedId);
   const selectedLocked = Boolean(selectedObject?.locked);
@@ -75,11 +76,13 @@ export default function App() {
       const stored = localStorage.getItem('3dcc-shape-library-v1');
       if (stored) setCustomPresets(JSON.parse(stored) as ModelObject[]);
     } catch { setCustomPresets([]); }
+    setLibraryLoaded(true);
   }, []);
 
   useEffect(() => {
+    if (!libraryLoaded) return;
     try { localStorage.setItem('3dcc-shape-library-v1', JSON.stringify(customPresets)); } catch { /* browser storage may be unavailable */ }
-  }, [customPresets]);
+  }, [customPresets, libraryLoaded]);
 
   const saveSelectedToLibrary = () => {
     if (!selectedObject) return;
