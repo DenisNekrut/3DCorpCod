@@ -32,6 +32,47 @@ export default function PropertiesPanel() {
       <label className="field-label">Название
         <input disabled={disabled} value={selected.name} onChange={(event) => updateObject(selected.id, { name: event.target.value })} />
       </label>
+      <label className="field-label color-field">Цвет объекта
+        <div className="color-control">
+          <input disabled={disabled} type="color" value={selected.color ?? '#8295b2'} onChange={(event) => updateObject(selected.id, { color: event.target.value })} />
+          <span>{selected.color ?? '#8295b2'}</span>
+        </div>
+      </label>
+      {selected.type === 'text' && (
+        <>
+          <div className="section-label">Параметры 3D-текста</div>
+          <label className="field-label">Содержимое
+            <textarea disabled={disabled} rows={3} maxLength={120} value={selected.textContent ?? 'Текст'} onChange={(event) => {
+              const textContent = event.target.value;
+              const fontSize = selected.fontSize ?? 10;
+              const dimensions: [number, number, number] = [Math.max(2, textContent.length * fontSize * 0.62), Math.max(2, fontSize * 1.2), selected.textDepth ?? selected.dimensions[2]];
+              updateObject(selected.id, { textContent, dimensions });
+            }} />
+          </label>
+          <label className="field-label">Размер шрифта (мм)
+            <input disabled={disabled} type="number" min="1" max="100" step="0.5" value={selected.fontSize ?? 10} onChange={(event) => {
+              const value = Math.max(1, Math.min(100, Number(event.target.value) || 1));
+              const oldSize = selected.fontSize ?? 10;
+              const ratio = value / oldSize;
+              updateObject(selected.id, { fontSize: value, dimensions: [Math.max(2, selected.dimensions[0] * ratio), Math.max(2, selected.dimensions[1] * ratio), selected.dimensions[2]] });
+            }} />
+          </label>
+          <label className="field-label">Толщина выдавливания (мм)
+            <input disabled={disabled} type="number" min="0.5" max="30" step="0.1" value={selected.textDepth ?? selected.dimensions[2]} onChange={(event) => {
+              const value = Math.max(0.5, Math.min(30, Number(event.target.value) || 0.5));
+              updateObject(selected.id, { textDepth: value, dimensions: [selected.dimensions[0], selected.dimensions[1], value] });
+            }} />
+          </label>
+          <label className="visibility-row">
+            <input disabled={disabled} type="checkbox" checked={Boolean(selected.textBevel)} onChange={(event) => updateObject(selected.id, { textBevel: event.target.checked })} />
+            Скруглить кромки текста
+          </label>
+          {selected.textBevel && <label className="field-label">Размер скругления (мм)
+            <input disabled={disabled} type="number" min="0.1" max="2" step="0.1" value={selected.textBevelSize ?? 0.3} onChange={(event) => updateObject(selected.id, { textBevelSize: Math.max(0.1, Math.min(2, Number(event.target.value) || 0.1)) })} />
+          </label>}
+          <p className="muted small-note">Текст создаётся как объёмная геометрия и попадает в экспорт STL/3MF.</p>
+        </>
+      )}
       <div className="section-label">Положение (мм)</div>
       <div className="triple-fields">
         {(['X', 'Y', 'Z'] as const).map((axis, index) => <label key={axis}>{axis}
