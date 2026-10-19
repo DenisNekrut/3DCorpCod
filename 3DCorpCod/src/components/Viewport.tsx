@@ -127,7 +127,7 @@ function ModelMesh({
       rotation={object.rotation.map((angle) => angle * Math.PI / 180) as [number, number, number]}
       visible={object.visible}
       onPointerOver={(event) => { event.stopPropagation(); setHoveredId(object.id); }}
-      onPointerOut={() => setHoveredId((current) => current === object.id ? null : current)}
+      onPointerOut={() => setHoveredId(null)}
       onClick={(event) => {
         event.stopPropagation();
         selectObject(object.id);
