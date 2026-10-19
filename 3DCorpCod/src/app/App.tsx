@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEditorStore } from '../editor/store';
-import type { PrimitiveType, ProjectDocument } from '../editor/types';
+import type { ModelObject, PrimitiveType, ProjectDocument } from '../editor/types';
 import { loadProject, saveProject } from '../storage/projectStorage';
 import { exportObjectsAsStl } from '../export/stlExport';
 import { exportObjectsAs3mf } from '../export/threeMfExport';
@@ -52,10 +52,12 @@ export default function App() {
   const ungroupSelected = useEditorStore((state) => state.ungroupSelected);
   const booleanSelected = useEditorStore((state) => state.booleanSelected);
   const toggleSelectObject = useEditorStore((state) => state.toggleSelectObject);
+  const addObjectFromPreset = useEditorStore((state) => state.addObjectFromPreset);
   const getProject = useEditorStore((state) => state.getProject);
   const loadProjectIntoStore = useEditorStore((state) => state.loadProject);
   const [saveStatus, setSaveStatus] = useState('Локальный проект');
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [customPresets, setCustomPresets] = useState<ModelObject[]>([]);
   const importRef = useRef<HTMLInputElement>(null);
   const selectedObject = objects.find((object) => object.id === selectedId);
   const selectedLocked = Boolean(selectedObject?.locked);
@@ -69,7 +71,22 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = 'dark';
+    try {
+      const stored = localStorage.getItem('3dcc-shape-library-v1');
+      if (stored) setCustomPresets(JSON.parse(stored) as ModelObject[]);
+    } catch { setCustomPresets([]); }
   }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem('3dcc-shape-library-v1', JSON.stringify(customPresets)); } catch { /* browser storage may be unavailable */ }
+  }, [customPresets]);
+
+  const saveSelectedToLibrary = () => {
+    if (!selectedObject) return;
+    const name = window.prompt('Название фигуры в библиотеке:', selectedObject.name);
+    if (!name?.trim()) return;
+    setCustomPresets((items) => [...items, { ...selectedObject, id: crypto.randomUUID(), name: name.trim(), position: [0, selectedObject.dimensions[1] / 2, 0], locked: false, booleanSource: false, booleanOperation: undefined, groupId: undefined }]);
+  };
 
   useEffect(() => {
     let active = true;
@@ -190,6 +207,14 @@ export default function App() {
               </button>
             ))}
           </div>
+          <div className="panel-heading object-heading">Моя библиотека <span className="count">{customPresets.length}</span></div>
+          {customPresets.map((preset) => (
+            <button key={preset.id} className="object-row" onClick={() => addObjectFromPreset(preset)} title="Добавить копию в сцену">
+              <span className="object-dot" style={{ background: preset.color ?? '#8295b2' }} />
+              <span className="object-name">{preset.name}</span><span className="muted">+</span>
+            </button>
+          ))}
+          <div className="object-actions"><button className="small-action" disabled={!selectedId || selectedLocked} onClick={saveSelectedToLibrary}>Сохранить выбранное в библиотеку</button></div>
           <div className="panel-heading object-heading">Объекты сцены <span className="count">{objects.length}</span></div>
           <div className="object-list">
             {objects.map((object) => (
