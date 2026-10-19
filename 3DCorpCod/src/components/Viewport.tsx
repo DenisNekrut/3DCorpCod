@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, OrbitControls, TransformControls } from '@react-three/drei';
-import { Euler, Mesh } from 'three';
+import { Mesh } from 'three';
 import { useEditorStore } from '../editor/store';
 import type { ModelObject } from '../editor/types';
 import { createObjectGeometry } from '../geometry/createObjectGeometry';
