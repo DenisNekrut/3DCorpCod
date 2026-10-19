@@ -5,6 +5,7 @@ on:
     branches: [main, master]
     paths:
       - '3DCorpCod/**'
+      - 'README.md'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
