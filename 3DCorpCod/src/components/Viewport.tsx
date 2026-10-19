@@ -102,6 +102,7 @@ function ModelMesh({
   const meshRef = useRef<Mesh>(null);
   const controlsRef = useRef<TransformControlsImpl | null>(null);
   const commitTransformRef = useRef<() => void>(() => {});
+  const draggingRef = useRef(false);
   const geometry = useMemo(() => evaluatedGeometry ?? createObjectGeometry(object), [
     evaluatedGeometry,
     object.type,
@@ -196,11 +197,29 @@ function ModelMesh({
       removeEventListener: (type: string, listener: (event: { value?: boolean }) => void) => void;
     };
     const handleDraggingChanged = (event: { value?: boolean }) => {
-      // Commit before the viewport's missed-click handler can clear selection.
-      if (event.value === false) commitTransformRef.current();
+      if (event.value === true) {
+        draggingRef.current = true;
+        return;
+      }
+      if (draggingRef.current) {
+        draggingRef.current = false;
+        commitTransformRef.current();
+      }
+    };
+    const handlePointerUpCapture = () => {
+      // Commit before React Three Fiber's pointer-missed handler clears selection.
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      commitTransformRef.current();
     };
     eventTarget.addEventListener('dragging-changed', handleDraggingChanged);
-    return () => eventTarget.removeEventListener('dragging-changed', handleDraggingChanged);
+    window.addEventListener('pointerup', handlePointerUpCapture, true);
+    window.addEventListener('pointercancel', handlePointerUpCapture, true);
+    return () => {
+      eventTarget.removeEventListener('dragging-changed', handleDraggingChanged);
+      window.removeEventListener('pointerup', handlePointerUpCapture, true);
+      window.removeEventListener('pointercancel', handlePointerUpCapture, true);
+    };
   }, [selected, transformMode]);
 
   const mesh = (
@@ -225,6 +244,7 @@ function ModelMesh({
         opacity={object.hole ? 0.35 : 1}
         emissive={selected ? '#173b65' : '#000000'}
       />
+      {selected && object.visible && <axesHelper args={[Math.max(8, Math.min(...object.dimensions) * 0.8)]} />}
     </mesh>
   );
 
@@ -241,7 +261,6 @@ function ModelMesh({
         dimensions[axis] = value;
         updateObject(object.id, { dimensions });
       }} />}
-      {selected && object.visible && <group position={object.position}><axesHelper args={[Math.max(8, Math.min(...object.dimensions) * 0.8)]} /></group>}
     </>
   );
 }
