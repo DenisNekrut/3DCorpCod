@@ -228,3 +228,47 @@ textarea:disabled { opacity: .5; cursor: not-allowed; }
 }
 .dimension-input:focus { border-color: var(--accent) !important; }
 .dimension-input[readonly] { cursor: default; }
+
+
+/* Project launcher */
+.home-shell { min-height: 100vh; overflow: auto; background: radial-gradient(ellipse at 72% 8%, #1d2a40 0, #111720 42%, #0d1118 100%); color: var(--text); }
+.home-topbar { height: 76px; display: flex; align-items: center; gap: 12px; padding: 0 clamp(20px, 5vw, 72px); border-bottom: 1px solid #ffffff12; background: #0d121bd9; }
+.home-version { margin-left: auto; color: #7f91aa; font-size: 10px; letter-spacing: .14em; }
+.home-hero { padding: clamp(48px, 8vw, 100px) clamp(20px, 8vw, 120px) 64px; max-width: 1160px; margin: 0 auto; }
+.home-eyebrow, .home-section-title > div > span { color: #78b9ff; font-size: 10px; font-weight: 700; letter-spacing: .2em; }
+.home-hero h1 { margin: 20px 0 16px; font-size: clamp(42px, 6vw, 76px); line-height: 1.04; letter-spacing: -.045em; font-weight: 650; }
+.home-hero h1 span { color: #8ebfff; }
+.home-hero p { max-width: 540px; color: #a3b0c2; font-size: 15px; line-height: 1.75; }
+.home-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.home-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 0 17px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.home-primary { color: #07111f; background: #8ebfff; border: 1px solid #8ebfff; }
+.home-primary:hover { background: #b1d4ff; }
+.home-secondary { color: #d7e1ef; background: #ffffff08; border: 1px solid #ffffff20; }
+.home-secondary:hover { background: #ffffff12; border-color: #7198c8; }
+.home-projects { max-width: 1160px; margin: 0 auto; padding: 0 clamp(20px, 8vw, 120px) 48px; }
+.home-section-title { display: flex; align-items: end; justify-content: space-between; margin-bottom: 18px; }
+.home-section-title h2 { margin: 7px 0 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+.home-project-count { color: #71839b; font-size: 11px; }
+.home-project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.home-project-card { min-width: 0; overflow: hidden; padding: 0; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; text-align: left; border: 1px solid #ffffff17; border-radius: 10px; background: #171f2b; color: #e1e9f4; cursor: pointer; }
+.home-project-card:hover { border-color: #6fa8e9; transform: translateY(-1px); }
+.home-project-preview { grid-column: 1 / -1; height: 112px; display: flex; align-items: center; justify-content: center; position: relative; background: radial-gradient(ellipse at center, #27364a, #141b26); }
+.home-project-preview > span { position: absolute; right: 10px; bottom: 9px; color: #95a8c1; font-size: 10px; }
+.preview-cube { width: 46px; height: 46px; border: 1px solid #7ab4fa; background: linear-gradient(135deg, #8ebfff55, #42658d22); transform: rotate(30deg) skew(-7deg, -7deg); box-shadow: 0 0 35px #5596e922; }
+.home-project-info { min-width: 0; display: flex; flex-direction: column; gap: 5px; padding: 0 0 13px 13px; }
+.home-project-info strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.home-project-info span { color: #7e90a8; font-size: 10px; }
+.home-project-card > svg { margin: 0 14px 13px 0; color: #88baff; }
+.home-empty { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 36px 20px; border: 1px dashed #ffffff20; border-radius: 10px; color: #8293aa; text-align: center; }
+.home-empty strong { color: #d3deec; font-size: 13px; }
+.home-empty span { font-size: 11px; }
+.home-storage-note { display: flex; align-items: center; gap: 9px; margin-top: 20px; color: #7f90a7; font-size: 11px; line-height: 1.6; }
+.home-storage-note svg { flex: 0 0 auto; color: #83b9f5; }
+.brand-home { cursor: pointer; }
+@media (max-width: 640px) {
+  .home-topbar { height: 64px; padding: 0 16px; }
+  .home-version { display: none; }
+  .home-hero { padding-top: 48px; padding-bottom: 48px; }
+  .home-hero p { font-size: 13px; }
+  .home-projects { padding-bottom: 28px; }
+}
