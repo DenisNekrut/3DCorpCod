@@ -128,6 +128,29 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [objects, getProject]);
 
+  const downloadSelectedObject = () => {
+    if (!selectedObject) {
+      setSaveStatus('Сначала выбери объект');
+      return;
+    }
+    const payload = {
+      schemaVersion: 1,
+      name: selectedObject.name,
+      units: 'mm',
+      object: selectedObject,
+      author: 'Некрут Денис',
+      updatedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = selectedObject.name.trim().replace(/[^a-z0-9а-яё_-]+/gi, '-') + '.3dobject.json';
+    anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setSaveStatus('Объект сохранён в файл');
+  };
+
   const downloadProject = () => {
     const data = JSON.stringify(getProject(), null, 2);
     const blob = new Blob([data], { type: 'application/json' });
@@ -268,7 +291,7 @@ export default function App() {
       <main className="home-shell">
         <header className="home-topbar">
           <div className="brand-mark">3D</div>
-          <div className="brand-copy"><strong>3DCorpCod</strong><span>3D MODELING STUDIO</span></div>
+          <div className="brand-copy"><strong>3DCorpCod</strong><span>3D MODELING STUDIO · АВТОР НЕКРУТ ДЕНИС</span></div>
           <span className="home-version">ПРОЕКТЫ · 3D-ПЕЧАТЬ · ММ</span>
         </header>
         <section className="home-hero">
@@ -312,6 +335,7 @@ export default function App() {
           <button className="icon-button" title="Повторить (Ctrl+Y)" onClick={redo} disabled={!redoStack.length}><Redo2 size={17} /><span>Повторить</span></button>
           <button className="icon-button" title="Открыть проект" onClick={() => importRef.current?.click()}><FolderOpen size={17} /><span>Открыть</span></button>
           <button className="icon-button" title="Скачать проект" onClick={downloadProject}><Save size={17} /><span>Скачать</span></button>
+          <button className="icon-button" title="Сохранить выбранный объект отдельным файлом" disabled={!selectedObject} onClick={downloadSelectedObject}><Download size={17} /><span>Объект</span></button>
           <button className="icon-button" title="Сохранить проект в GitHub" onClick={() => void saveToGitHub()}><Github size={17} /><span>GitHub</span></button>
           <button className="icon-button" title="На главную страницу проектов" onClick={() => setScreen('home')}><FolderOpen size={17} /><span>Главная</span></button>
           <button className="icon-button" title="Предпросмотр готовой модели" onClick={() => setPreviewOpen(true)}><Eye size={17} /><span>Предпросмотр</span></button>
