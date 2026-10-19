@@ -1,7 +1,7 @@
 import { Euler, Matrix4, Quaternion, Vector3 } from 'three';
 import { strToU8, zipSync } from 'fflate';
 import type { ModelObject } from '../editor/types';
-import { createObjectGeometry } from '../geometry/createObjectGeometry';
+import { createBooleanGeometry } from '../geometry/boolean/createBooleanGeometry';
 
 const xmlEscape = (value: string) => value
   .replace(/&/g, '&amp;')
@@ -10,8 +10,8 @@ const xmlEscape = (value: string) => value
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&apos;');
 
-function objectMeshXml(object: ModelObject, objectId: number): string {
-  const geometry = createObjectGeometry(object);
+function objectMeshXml(object: ModelObject, objectId: number, allObjects: ModelObject[]): string {
+  const geometry = createBooleanGeometry(object, allObjects);
   const position = geometry.getAttribute('position');
   const index = geometry.getIndex();
   const matrix = new Matrix4().compose(
@@ -44,10 +44,10 @@ function objectMeshXml(object: ModelObject, objectId: number): string {
 }
 
 export function exportObjectsAs3mf(objects: ModelObject[], fileName = '3dcorpcod-model.3mf'): void {
-  const visibleObjects = objects.filter((object) => object.visible);
-  if (!visibleObjects.length) throw new Error('Нет видимых объектов для экспорта');
+  const visibleObjects = objects.filter((object) => object.visible && !object.hole);
+  if (!visibleObjects.length) throw new Error('Нет видимых тел для экспорта');
 
-  const resources = visibleObjects.map((object, index) => objectMeshXml(object, index + 1)).join('');
+  const resources = visibleObjects.map((object, index) => objectMeshXml(object, index + 1, objects)).join('');
   const buildItems = visibleObjects.map((_, index) => `<item objectid="${index + 1}"/>`).join('');
   const model = `<?xml version="1.0" encoding="UTF-8"?>\n<model unit="millimeter" xml:lang="ru-RU" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><metadata name="Title">3DCorpCod model</metadata><resources>${resources}</resources><build>${buildItems}</build></model>`;
   const contentTypes = `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>`;
