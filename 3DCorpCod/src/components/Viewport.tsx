@@ -282,7 +282,7 @@ function ModelMesh({
   );
 }
 
-function SceneContents() {
+function SceneContents({ rulerEnabled, rulerPoints, setRulerPoints }: { rulerEnabled: boolean; rulerPoints: [number, number, number][]; setRulerPoints: (points: [number, number, number][]) => void }) {
   const objects = useEditorStore((state) => state.objects);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const evaluatedGeometries = useMemo(() => {
@@ -308,6 +308,40 @@ function SceneContents() {
       <directionalLight position={[40, 60, 30]} intensity={2.2} />
       <gridHelper args={[200, 200, '#526780', '#263244']} position={[0, 0, 0]} />
       <WorkspaceRulers />
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, -0.02, 0]}
+        onClick={(event) => {
+          if (!rulerEnabled) return;
+          event.stopPropagation();
+          const point: [number, number, number] = [
+            Math.round(event.point.x * 10) / 10,
+            0,
+            Math.round(event.point.z * 10) / 10,
+          ];
+          setRulerPoints(rulerPoints.length >= 2 ? [point] : [...rulerPoints, point]);
+        }}
+      >
+        <planeGeometry args={[200, 200]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} side={2} />
+      </mesh>
+      {rulerEnabled && rulerPoints.length > 0 && (
+        <group>
+          <mesh position={rulerPoints[0]}><sphereGeometry args={[0.7, 12, 8]} /><meshBasicMaterial color="#ffd166" depthTest={false} /></mesh>
+          {rulerPoints.length === 2 && (
+            <>
+              <mesh position={rulerPoints[1]}><sphereGeometry args={[0.7, 12, 8]} /><meshBasicMaterial color="#ffd166" depthTest={false} /></mesh>
+              <Line points={[rulerPoints[0], rulerPoints[1]]} color="#ffd166" lineWidth={2} />
+              <Html position={[(rulerPoints[0][0] + rulerPoints[1][0]) / 2, 0.5, (rulerPoints[0][2] + rulerPoints[1][2]) / 2]} center style={{ pointerEvents: 'none' }}>
+                <span className="virtual-ruler-readout">
+                  ΔX {(rulerPoints[1][0] - rulerPoints[0][0]).toFixed(1)} мм · ΔZ {(rulerPoints[1][2] - rulerPoints[0][2]).toFixed(1)} мм ·
+                  <strong> {Math.hypot(rulerPoints[1][0] - rulerPoints[0][0], rulerPoints[1][2] - rulerPoints[0][2]).toFixed(1)} мм</strong>
+                </span>
+              </Html>
+            </>
+          )}
+        </group>
+      )}
 
       {objects.filter((object) => !object.booleanSource).map((object) => (
         <ModelMesh
@@ -326,17 +360,19 @@ function SceneContents() {
   );
 }
 
-export default function Viewport() {
+export default function Viewport({ rulerEnabled = false }: { rulerEnabled?: boolean }) {
+  const [rulerPoints, setRulerPoints] = useState<[number, number, number][]>([]);
+  useEffect(() => { setRulerPoints([]); }, [rulerEnabled]);
   const selectObject = useEditorStore((state) => state.selectObject);
 
   return (
     <div className="viewport">
       <Canvas camera={{ position: [70, 65, 80], fov: 45 }} dpr={[1, 2]} onPointerMissed={() => selectObject(null)}>
-        <SceneContents />
+        <SceneContents rulerEnabled={rulerEnabled} rulerPoints={rulerPoints} setRulerPoints={setRulerPoints} />
       </Canvas>
       <div className="viewport-label">РАБОЧАЯ ОБЛАСТЬ · СЕТКА 1 ММ</div>
       <div className="viewport-watermark" aria-hidden="true"><span>3DCorpCod</span><small>Автор: Некрут Денис</small></div>
-      <div className="viewport-help">Линейки в мм · размеры при выборе/наведении. Замок блокирует объект. Ctrl+S — сохранить, Ctrl+O — открыть, Ctrl+D — дублировать, Delete — удалить.</div>
+      <div className="viewport-help">{rulerEnabled ? 'Линейка: щёлкни две точки на сетке. Esc — выключить инструмент.' : 'Размеры при выборе/наведении.'} Замок блокирует объект. Ctrl+S — сохранить, Ctrl+O — открыть, Ctrl+D — дублировать, Delete — удалить.</div>
     </div>
   );
 }
