@@ -32,6 +32,9 @@ export default function PropertiesPanel() {
       <label className="field-label">Название
         <input disabled={disabled} value={selected.name} onChange={(event) => updateObject(selected.id, { name: event.target.value })} />
       </label>
+      <label className="field-label">Слой
+        <input disabled={disabled} maxLength={40} value={selected.layer ?? 'Основной'} onChange={(event) => updateObject(selected.id, { layer: event.target.value.trim() || 'Основной' })} />
+      </label>
       <label className="field-label color-field">Цвет объекта
         <div className="color-control">
           <input disabled={disabled} type="color" value={selected.color ?? '#8295b2'} onChange={(event) => updateObject(selected.id, { color: event.target.value })} />
