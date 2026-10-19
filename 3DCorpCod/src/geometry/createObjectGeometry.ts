@@ -1,10 +1,12 @@
 import {
   BoxGeometry,
+  BufferGeometry,
   CapsuleGeometry,
   CylinderGeometry,
   SphereGeometry,
   TorusGeometry,
   Vector3,
+  Float32BufferAttribute,
   type BufferGeometry,
 } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
@@ -59,6 +61,20 @@ function createRawObjectGeometry(object: ModelObject): BufferGeometry {
   const depth = positive(rawDepth);
 
   if (object.type === 'text') return createExtrudedText(object, width, height, depth);
+
+  if (object.type === 'mesh') {
+    const positions = object.customGeometry?.positions;
+    if (!positions || positions.length < 9 || positions.length % 3 !== 0) {
+      throw new Error('Imported mesh has no valid triangle geometry');
+    }
+    const geometry = new BufferGeometry();
+    const scaled = positions.map((value, index) => value * [width, height, depth][index % 3]);
+    geometry.setAttribute('position', new Float32BufferAttribute(scaled, 3));
+    geometry.computeVertexNormals();
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
+    return geometry;
+  }
 
   if (object.type === 'box') {
     const treatment = object.edgeTreatment ?? 'none';
