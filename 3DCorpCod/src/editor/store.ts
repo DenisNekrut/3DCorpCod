@@ -90,7 +90,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   updateObject: (id, patch) => set((state) => {
     const target = state.objects.find((object) => object.id === id);
     if (!target || (target.locked && !(Object.keys(patch).length === 1 && 'locked' in patch))) return state;
-    const nextObjects = state.objects.map((object) => object.id === id ? { ...object, ...patch } : object);
+    const normalizedPatch: Partial<ModelObject> = { ...patch };
+    // Keep the object's bottom anchor at the same world Y when its height changes.
+    // If the caller explicitly supplies a position (e.g. a transform), respect it.
+    if (patch.dimensions && !patch.position) {
+      normalizedPatch.position = [
+        target.position[0],
+        target.position[1] - target.dimensions[1] / 2 + patch.dimensions[1] / 2,
+        target.position[2],
+      ];
+    }
+    const nextObjects = state.objects.map((object) => object.id === id ? { ...object, ...normalizedPatch } : object);
     // Coalesce rapid gizmo updates into a single undo step while preserving normal edits.
     const now = Date.now();
     const coalesce = now - (state.lastHistoryAt ?? 0) < 350;
