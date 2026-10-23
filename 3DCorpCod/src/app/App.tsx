@@ -417,9 +417,9 @@ export default function App() {
         <aside className="leftbar panel">
           <div className="panel-heading">Фигуры <span className="count">9</span></div>
           <div className="primitive-grid">
-            {primitiveButtons.map(({ type, label, Icon }) => (
-              <button key={type} className="primitive-button" onClick={() => addPrimitive(type)}>
-                <Icon size={22} strokeWidth={1.6} /><span>{label}</span>
+            {primitiveButtons.map(({ type, label, hint, Icon }) => (
+              <button key={type} className="primitive-button" onClick={() => addPrimitive(type)} title={hint} aria-label={`Добавить: ${hint}`}>
+                <Icon size={24} strokeWidth={1.6} /><span>{label}</span>
               </button>
             ))}
           </div>
