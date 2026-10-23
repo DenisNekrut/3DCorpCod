@@ -18,6 +18,30 @@ import type { ModelObject } from '../editor/types';
 const positive = (value: number) => Math.max(0.1, Number.isFinite(value) ? value : 0.1);
 const textFont = new FontLoader().parse(droidSansFont);
 
+/**
+ * Primitive geometry contract: every editable primitive is centered at its local
+ * origin and its measured bounding box exactly matches the requested mm dimensions.
+ * The object position is therefore the stable transform anchor; its Y coordinate
+ * is always the center height, so position.y = height / 2 rests it on the workplane.
+ */
+function fitPrimitiveGeometry(geometry: BufferGeometry, width: number, height: number, depth: number): BufferGeometry {
+  geometry.computeBoundingBox();
+  const bounds = geometry.boundingBox;
+  if (!bounds) return geometry;
+  const size = bounds.getSize(new Vector3());
+  const center = bounds.getCenter(new Vector3());
+  geometry.translate(-center.x, -center.y, -center.z);
+  geometry.scale(
+    width / Math.max(size.x, 1e-6),
+    height / Math.max(size.y, 1e-6),
+    depth / Math.max(size.z, 1e-6),
+  );
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+}
+
 function createExtrudedText(object: ModelObject, width: number, height: number, depth: number): BufferGeometry {
   const size = positive(object.fontSize ?? height);
   const textDepth = positive(object.textDepth ?? depth);
@@ -116,43 +140,38 @@ function createRawObjectGeometry(object: ModelObject): BufferGeometry {
   switch (object.type) {
     case 'sphere': {
       const geometry = new SphereGeometry(0.5, 40, 28);
-      geometry.scale(width, height, depth);
-      return geometry;
+      return fitPrimitiveGeometry(geometry, width, height, depth);
     }
     case 'cylinder': {
       const geometry = new CylinderGeometry(0.5, 0.5, 1, 48, 1);
-      geometry.scale(width, height, depth);
-      return geometry;
+      return fitPrimitiveGeometry(geometry, width, height, depth);
     }
     case 'cone': {
       const geometry = new CylinderGeometry(0, 0.5, 1, 48, 1);
-      geometry.scale(width, height, depth);
-      return geometry;
+      return fitPrimitiveGeometry(geometry, width, height, depth);
     }
     case 'torus': {
       const tube = Math.max(0.2, Math.min(height, width, depth) * 0.2);
       const diameter = Math.max(0.4, Math.min(width, depth));
       const geometry = new TorusGeometry(Math.max(0.1, diameter / 2 - tube / 2), tube / 2, 16, 48);
       geometry.scale(width / diameter, height / tube, depth / diameter);
-      return geometry;
+      return fitPrimitiveGeometry(geometry, width, height, depth);
     }
     case 'capsule': {
       const diameter = Math.min(width, depth);
       const straightLength = Math.max(0.01, height / diameter - 1);
       const geometry = new CapsuleGeometry(0.5, straightLength, 8, 24);
       geometry.scale(width, height / (straightLength + 1), depth);
-      return geometry;
+      return fitPrimitiveGeometry(geometry, width, height, depth);
     }
     case 'pyramid': {
       const geometry = new CylinderGeometry(0, 0.5, 1, 4, 1);
       geometry.rotateY(Math.PI / 4);
-      geometry.scale(width * Math.SQRT2, height, depth * Math.SQRT2);
-      return geometry;
+      return fitPrimitiveGeometry(geometry, width, height, depth);
     }
     case 'prism': {
       const geometry = new CylinderGeometry(0.5, 0.5, 1, 3, 1);
-      geometry.scale(width * (4 / 3), height, depth * (2 / Math.sqrt(3)));
-      return geometry;
+      return fitPrimitiveGeometry(geometry, width, height, depth);
     }
     default: {
       const exhaustive: never = object.type;

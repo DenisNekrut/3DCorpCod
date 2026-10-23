@@ -82,3 +82,37 @@ describe('box edge treatments', () => {
     }
   });
 });
+
+
+const primitiveTypes = ['box', 'sphere', 'cylinder', 'cone', 'torus', 'capsule', 'pyramid', 'prism', 'text'] as const;
+
+describe('primitive dimensions and transform anchors', () => {
+  it.each(primitiveTypes)('%s has an exact centered bounding box in millimetres', (type) => {
+    const dimensions: [number, number, number] = [17, 11, 23];
+    const object: ModelObject = {
+      id: `primitive-${type}`,
+      name: type,
+      type,
+      position: [0, dimensions[1] / 2, 0],
+      rotation: [0, 0, 0],
+      dimensions,
+      visible: true,
+      ...(type === 'text' ? { textContent: 'TEST', fontSize: 10, textDepth: dimensions[2] } : {}),
+    };
+    const geometry = createObjectGeometry(object);
+    try {
+      geometry.computeBoundingBox();
+      const bounds = geometry.boundingBox;
+      expect(bounds).not.toBeNull();
+      expect(bounds!.min.x).toBeCloseTo(-dimensions[0] / 2, 3);
+      expect(bounds!.max.x).toBeCloseTo(dimensions[0] / 2, 3);
+      expect(bounds!.min.y).toBeCloseTo(-dimensions[1] / 2, 3);
+      expect(bounds!.max.y).toBeCloseTo(dimensions[1] / 2, 3);
+      expect(bounds!.min.z).toBeCloseTo(-dimensions[2] / 2, 3);
+      expect(bounds!.max.z).toBeCloseTo(dimensions[2] / 2, 3);
+      expect(object.position[1] - dimensions[1] / 2).toBeCloseTo(0, 8);
+    } finally {
+      geometry.dispose();
+    }
+  });
+});

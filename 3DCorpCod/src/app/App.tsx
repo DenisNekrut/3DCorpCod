@@ -19,16 +19,16 @@ import PropertiesPanel from '../components/PropertiesPanel';
 import PreviewWindow from '../components/PreviewWindow';
 import '../styles/app.css';
 
-const primitiveButtons: { type: PrimitiveType; label: string; Icon: LucideIcon }[] = [
-  { type: 'box', label: 'Куб', Icon: Box },
-  { type: 'sphere', label: 'Сфера', Icon: Circle },
-  { type: 'cylinder', label: 'Цилиндр', Icon: Cylinder },
-  { type: 'cone', label: 'Конус', Icon: Cone },
-  { type: 'torus', label: 'Тор', Icon: Donut },
-  { type: 'capsule', label: 'Капсула', Icon: Pill },
-  { type: 'pyramid', label: 'Пирамида', Icon: Triangle },
-  { type: 'prism', label: 'Призма', Icon: Hexagon },
-  { type: 'text', label: '3D-текст', Icon: Type },
+const primitiveButtons: { type: PrimitiveType; label: string; hint: string; Icon: LucideIcon }[] = [
+  { type: 'box', label: 'Бокс', hint: 'Прямоугольное тело', Icon: Box },
+  { type: 'sphere', label: 'Сфера', hint: 'Округлое тело', Icon: Circle },
+  { type: 'cylinder', label: 'Цилиндр', hint: 'Круглое тело с плоскими основаниями', Icon: Cylinder },
+  { type: 'cone', label: 'Конус', hint: 'Круглое основание и вершина', Icon: Cone },
+  { type: 'torus', label: 'Тор', hint: 'Кольцо с круглым сечением', Icon: Donut },
+  { type: 'capsule', label: 'Капсула', hint: 'Цилиндр со скруглёнными концами', Icon: Pill },
+  { type: 'pyramid', label: 'Пирамида', hint: 'Четыре боковые грани', Icon: Triangle },
+  { type: 'prism', label: 'Треугольная призма', hint: 'Треугольные основания', Icon: Hexagon },
+  { type: 'text', label: '3D-текст', hint: 'Объёмная надпись', Icon: Type },
 ];
 
 export default function App() {
@@ -415,11 +415,11 @@ export default function App() {
 
       <div className="workspace">
         <aside className="leftbar panel">
-          <div className="panel-heading">Создать объект</div>
+          <div className="panel-heading">Фигуры <span className="count">9</span></div>
           <div className="primitive-grid">
-            {primitiveButtons.map(({ type, label, Icon }) => (
-              <button key={type} className="primitive-button" onClick={() => addPrimitive(type)}>
-                <Icon size={22} strokeWidth={1.6} /><span>{label}</span>
+            {primitiveButtons.map(({ type, label, hint, Icon }) => (
+              <button key={type} className="primitive-button" onClick={() => addPrimitive(type)} title={hint} aria-label={`Добавить: ${hint}`}>
+                <Icon size={24} strokeWidth={1.6} /><span>{label}</span>
               </button>
             ))}
           </div>
@@ -469,7 +469,7 @@ export default function App() {
             <button className={`tool-button ${selectedObject?.hole ? 'active' : ''}`} onClick={toggleHoleSelected} disabled={!selectedId || selectedLocked} aria-pressed={Boolean(selectedObject?.hole)} title="Вычитать этот объект из пересекающихся тел">
               <CircleSlash size={15} />{selectedObject?.hole ? 'Режим отверстия' : 'Сделать отверстием'}
             </button>
-            <button className={`tool-button ${gridSnap ? 'active' : ''}`} onClick={toggleGridSnap} aria-pressed={gridSnap} title="Шаг привязки 1 мм"><Magnet size={15} /> Привязка {gridSnap ? 'вкл.' : 'выкл.'}</button>
+            <button className={`tool-button ${gridSnap ? 'active' : ''}`} onClick={toggleGridSnap} aria-pressed={gridSnap} title="Шаг привязки 0,1 мм"><Magnet size={15} /> Привязка {gridSnap ? 'вкл.' : 'выкл.'}</button>
             <button className={`tool-button ${rulerEnabled ? 'active' : ''}`} onClick={() => setRulerEnabled((enabled) => !enabled)} aria-pressed={rulerEnabled} title="Измерить расстояние между двумя точками на рабочей плоскости"><Ruler size={15} /> Линейка {rulerEnabled ? 'вкл.' : 'выкл.'}</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'min')} title="Выровнять по краю X"><AlignStartHorizontal size={15} /> X min</button>
             <button className="tool-button" disabled={selectedIds.length < 2} onClick={() => alignSelected(0, 'center')} title="Выровнять по центру X"><AlignCenterHorizontal size={15} /> X центр</button>
