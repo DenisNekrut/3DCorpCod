@@ -65,6 +65,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 .primitive-button svg { color: var(--accent); }
 .primitive-button:hover { border-color: var(--accent-strong); background: var(--accent-soft); color: #fff; transform: translateY(-1px); }
+.primitive-button:focus-visible { border-color: var(--accent); background: var(--accent-soft); }
 .primitive-button:active { transform: translateY(0); }
 .object-heading { border-top: 1px solid var(--line-soft); }
 .count { min-width: 21px; padding: 3px 6px; border-radius: 6px; background: #2a3034; color: var(--muted); font-size: 10px; text-align: center; }
