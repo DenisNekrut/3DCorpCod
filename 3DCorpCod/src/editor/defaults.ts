@@ -14,29 +14,43 @@ const dimensionsByType: Record<PrimitiveType, [number, number, number]> = {
 };
 
 const names: Record<PrimitiveType, string> = {
-  box: 'Куб',
+  box: 'Бокс',
   sphere: 'Сфера',
   cylinder: 'Цилиндр',
   cone: 'Конус',
   torus: 'Тор',
   capsule: 'Капсула',
-  pyramid: 'Пирамида',
+  pyramid: 'Четырёхгранная пирамида',
   prism: 'Треугольная призма',
-  text: 'Текст',
-  mesh: 'Импортированная сетка',
+  text: '3D-текст',
+  mesh: 'Импортированная модель',
+};
+
+const colors: Record<PrimitiveType, string> = {
+  box: '#48b9ff',
+  sphere: '#ff806b',
+  cylinder: '#f4c95d',
+  cone: '#a78bfa',
+  torus: '#49dcb1',
+  capsule: '#ff9fca',
+  pyramid: '#ffb86b',
+  prism: '#6bd7ff',
+  text: '#e5e7eb',
+  mesh: '#8295b2',
 };
 
 export function createPrimitive(type: PrimitiveType, index: number): ModelObject {
-  const dimensions = dimensionsByType[type];
+  const dimensions = [...dimensionsByType[type]] as [number, number, number];
   return {
     id: crypto.randomUUID(),
     name: `${names[type]} ${index + 1}`,
     type,
+    // Every primitive uses a centered local origin and is placed on the Y=0 workplane.
     position: [index * 5, dimensions[1] / 2, 0],
     rotation: [0, 0, 0],
-    dimensions: [...dimensions],
+    dimensions,
     visible: true,
-    color: '#8295b2',
+    color: colors[type],
     layer: 'Основной',
     ...(type === 'text' ? { textContent: 'Текст', fontSize: 10, textDepth: 2, textBevel: false, textBevelSize: 0.3 } : {}),
     edgeTreatment: 'none',
