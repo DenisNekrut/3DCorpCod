@@ -209,12 +209,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const ids = new Set(state.selectedIds.length ? state.selectedIds : state.selectedId ? [state.selectedId] : []);
     const selected = state.objects.filter((object) => ids.has(object.id) && !object.locked && !object.hole);
     if (selected.length < 2) return state;
-    const resultId = state.selectedId && ids.has(state.selectedId) ? state.selectedId : selected[0].id;
+
+    // Only editable solid operands may participate. A mixed selection can contain
+    // locked objects or hole cutters; those must never be rewritten as boolean operands.
+    const operandIds = new Set(selected.map((object) => object.id));
+    const resultId = state.selectedId && operandIds.has(state.selectedId) ? state.selectedId : selected[0].id;
     const groupId = crypto.randomUUID();
     return {
       ...record(state),
       objects: state.objects.map((object) => {
-        if (!ids.has(object.id)) return object;
+        if (!operandIds.has(object.id)) return object;
         if (object.id === resultId) return { ...object, groupId, booleanOperation: operation, booleanSource: false };
         return { ...object, groupId, booleanSource: true, booleanOperation: undefined };
       }),
