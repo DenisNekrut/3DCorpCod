@@ -19,16 +19,16 @@ import PropertiesPanel from '../components/PropertiesPanel';
 import PreviewWindow from '../components/PreviewWindow';
 import '../styles/app.css';
 
-const primitiveButtons: { type: PrimitiveType; label: string; Icon: LucideIcon }[] = [
-  { type: 'box', label: 'Куб', Icon: Box },
-  { type: 'sphere', label: 'Сфера', Icon: Circle },
-  { type: 'cylinder', label: 'Цилиндр', Icon: Cylinder },
-  { type: 'cone', label: 'Конус', Icon: Cone },
-  { type: 'torus', label: 'Тор', Icon: Donut },
-  { type: 'capsule', label: 'Капсула', Icon: Pill },
-  { type: 'pyramid', label: 'Пирамида', Icon: Triangle },
-  { type: 'prism', label: 'Призма', Icon: Hexagon },
-  { type: 'text', label: '3D-текст', Icon: Type },
+const primitiveButtons: { type: PrimitiveType; label: string; hint: string; Icon: LucideIcon }[] = [
+  { type: 'box', label: 'Бокс', hint: 'Прямоугольное тело', Icon: Box },
+  { type: 'sphere', label: 'Сфера', hint: 'Округлое тело', Icon: Circle },
+  { type: 'cylinder', label: 'Цилиндр', hint: 'Круглое тело с плоскими основаниями', Icon: Cylinder },
+  { type: 'cone', label: 'Конус', hint: 'Круглое основание и вершина', Icon: Cone },
+  { type: 'torus', label: 'Тор', hint: 'Кольцо с круглым сечением', Icon: Donut },
+  { type: 'capsule', label: 'Капсула', hint: 'Цилиндр со скруглёнными концами', Icon: Pill },
+  { type: 'pyramid', label: 'Пирамида', hint: 'Четыре боковые грани', Icon: Triangle },
+  { type: 'prism', label: 'Треугольная призма', hint: 'Треугольные основания', Icon: Hexagon },
+  { type: 'text', label: '3D-текст', hint: 'Объёмная надпись', Icon: Type },
 ];
 
 export default function App() {
@@ -415,7 +415,7 @@ export default function App() {
 
       <div className="workspace">
         <aside className="leftbar panel">
-          <div className="panel-heading">Создать объект</div>
+          <div className="panel-heading">Фигуры <span className="count">9</span></div>
           <div className="primitive-grid">
             {primitiveButtons.map(({ type, label, Icon }) => (
               <button key={type} className="primitive-button" onClick={() => addPrimitive(type)}>
