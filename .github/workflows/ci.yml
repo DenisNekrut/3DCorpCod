@@ -1,0 +1,41 @@
+name: 3DCorpCod CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+    paths:
+      - '3DCorpCod/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '3DCorpCod/**'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck, build and tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 3DCorpCod
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build
+        run: npm run build
+      - name: Test
+        run: npm test
